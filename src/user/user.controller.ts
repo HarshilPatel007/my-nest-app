@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { Body } from '@nestjs/common/decorators';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -22,15 +14,16 @@ export class UserController {
   }
 
   // if we want to get it by mongodb generated ObjectID "_id"
-  // @Get('/get/:userId')
-  // getUser(@Param('_id') _id: string) {
-  //   return this.userService.getUser({ _id });
-  // }
-
   @Get('/get/:userId')
-  getUser(@Param('userId') userId: string) {
-    return this.userService.getUser({ userId });
+  getUser(@Param('userId') _id: string) {
+    return this.userService.getUser(_id);
   }
+
+  // if we want to get it by custom ID
+  // @Get('/get/:userId')
+  // getUser(@Param('userId') userId: string) {
+  //   return this.userService.getUser({ userId });
+  // }
 
   @Post('/create')
   createUser(@Body() createUserDto: CreateUserDto) {
@@ -40,13 +33,13 @@ export class UserController {
   @Patch('/update/:userId')
   updateUser(
     @Body() updateUserDto: UpdateUserDto,
-    @Param('userId', ParseIntPipe) userId: string,
+    @Param('userId') _id: string,
   ) {
-    return this.userService.updateUser(updateUserDto, userId);
+    return this.userService.updateUser(updateUserDto, _id);
   }
 
   @Delete('/delete/:userId')
-  deleteUser(@Param('userId', ParseIntPipe) userId: string) {
-    return this.userService.deleteUser(userId);
+  deleteUser(@Param('userId') _id: string) {
+    return this.userService.deleteUser(_id);
   }
 }
