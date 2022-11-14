@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common/enums';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -18,7 +19,20 @@ export class UserService {
   }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
-    return new this.userModel(createUserDto).save();
+    const { username, email } = createUserDto;
+    const username_exist = await this.userModel.findOne({ username });
+    const email_exist = await this.userModel.findOne({ email });
+    if (username_exist) {
+      throw new HttpException('Username already taken!', HttpStatus.CONFLICT);
+    } else if (email_exist) {
+      throw new HttpException(
+        `User with the ${email} already exist!`,
+        HttpStatus.CONFLICT,
+      );
+    } else {
+      // return new this.userModel(createUserDto).save();
+      return this.userModel.create(createUserDto);
+    }
   }
 
   async updateUser(updateUserDto: UpdateUserDto, _id: string): Promise<User> {
