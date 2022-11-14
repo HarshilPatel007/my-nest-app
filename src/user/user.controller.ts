@@ -1,7 +1,9 @@
 import { Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { Body } from '@nestjs/common/decorators';
+import { AuthDto } from './dto/auth.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Tokens } from './types/tokens.types';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -26,7 +28,7 @@ export class UserController {
   // }
 
   @Post('/create')
-  createUser(@Body() createUserDto: CreateUserDto) {
+  createUser(@Body() createUserDto: CreateUserDto): Promise<Tokens> {
     return this.userService.createUser(createUserDto);
   }
 
@@ -41,5 +43,10 @@ export class UserController {
   @Delete('/delete/:userId')
   deleteUser(@Param('userId') _id: string) {
     return this.userService.deleteUser(_id);
+  }
+
+  @Post('/login')
+  signinLocal(@Body() authDto: AuthDto): Promise<Tokens> {
+    return this.userService.loginUser(authDto);
   }
 }

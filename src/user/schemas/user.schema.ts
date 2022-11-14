@@ -15,6 +15,7 @@ export class User {
   fullname: string;
   @Prop({ required: true })
   age: number;
+  refreshTokens: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
