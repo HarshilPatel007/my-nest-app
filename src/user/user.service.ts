@@ -1,4 +1,8 @@
-import { ForbiddenException, HttpException, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common/enums';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -24,11 +28,11 @@ export class UserService {
   async getTokens(username: string, email: string): Promise<Tokens> {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
-        { sub: username, email },
+        { username: username, email },
         { secret: 'at-secret', expiresIn: 60 * 30 }, // 30 minutes
       ),
       this.jwtService.signAsync(
-        { sub: username, email },
+        { username: username, email },
         { secret: 'rt-secret', expiresIn: 60 * 60 * 24 * 7 }, // one week
       ),
     ]);
@@ -92,7 +96,8 @@ export class UserService {
       email: authDto.email,
     });
 
-    if (!user) throw new ForbiddenException('Access Denided! User not found!');
+    if (!user)
+      throw new UnauthorizedException('Access Denided! User not found!');
 
     console.log(user);
     const passwordMatches = await bcrypt.compare(
@@ -100,7 +105,7 @@ export class UserService {
       user.password,
     );
     if (!passwordMatches)
-      throw new ForbiddenException('Access Denided! Password not matched!');
+      throw new UnauthorizedException('Access Denided! Password is incorrect!');
     const tokens = await this.getTokens(user.username, user.email);
     return tokens;
   }

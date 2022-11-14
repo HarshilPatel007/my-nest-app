@@ -1,5 +1,14 @@
-import { Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Body } from '@nestjs/common/decorators';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthDto } from './dto/auth.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -10,12 +19,14 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private userService: UserService) {} //dependency injection
 
+  @UseGuards(AuthGuard('jwt'))
   @Get('/all')
   getUsers() {
     return this.userService.getUsers();
   }
 
   // if we want to get it by mongodb generated ObjectID "_id"
+  @UseGuards(AuthGuard('jwt'))
   @Get('/get/:userId')
   getUser(@Param('userId') _id: string) {
     return this.userService.getUser(_id);
@@ -32,6 +43,7 @@ export class UserController {
     return this.userService.createUser(createUserDto);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Patch('/update/:userId')
   updateUser(
     @Body() updateUserDto: UpdateUserDto,
@@ -40,6 +52,7 @@ export class UserController {
     return this.userService.updateUser(updateUserDto, _id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Delete('/delete/:userId')
   deleteUser(@Param('userId') _id: string) {
     return this.userService.deleteUser(_id);
