@@ -88,20 +88,20 @@ export class UserService {
   }
 
   async loginUser(authDto: AuthDto): Promise<Tokens> {
-    const user: User[] = await this.userModel.where({
+    const user = await this.userModel.findOne({
       email: authDto.email,
     });
 
     if (!user) throw new ForbiddenException('Access Denided! User not found!');
 
-    console.log(user[0]);
+    console.log(user);
     const passwordMatches = await bcrypt.compare(
       authDto.password,
-      user[0].password,
+      user.password,
     );
     if (!passwordMatches)
       throw new ForbiddenException('Access Denided! Password not matched!');
-    const tokens = await this.getTokens(user[0].username, user[0].email);
+    const tokens = await this.getTokens(user.username, user.email);
     return tokens;
   }
 }
