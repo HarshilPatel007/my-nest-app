@@ -48,9 +48,16 @@ export class UserService {
   async getUsers(): Promise<User[]> {
     return this.userModel.find().exec();
   }
+  async getUserFromToken(email): Promise<User> {
+    return this.userModel.findOne({ email }).exec();
+  }
 
   async getUser(_id: string): Promise<User> {
-    return this.userModel.findById(_id);
+    if (_id === this.loggedInUserId) {
+      return this.userModel.findById(_id);
+    } else {
+      throw new UnauthorizedException('User ID not matched!');
+    }
   }
 
   // get user by email
