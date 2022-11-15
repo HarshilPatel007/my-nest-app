@@ -21,6 +21,8 @@ export class UserService {
     private jwtService: JwtService,
   ) {}
 
+  loggedInUserId = '';
+
   hashData(data: string) {
     return bcrypt.hash(data, 10);
   }
@@ -50,6 +52,15 @@ export class UserService {
   async getUser(_id: string): Promise<User> {
     return this.userModel.findById(_id);
   }
+
+  // get user by email
+  // async getUserByEmail(email: string): Promise<User> {
+  //   return this.userModel.findOne({
+  //     where: {
+  //       email: email,
+  //     },
+  //   });
+  // }
 
   async createUser(createUserDto: CreateUserDto): Promise<Tokens> {
     const { username, email, password, fullname, age } = createUserDto;
@@ -84,11 +95,19 @@ export class UserService {
   // }
 
   async updateUser(updateUserDto: UpdateUserDto, _id: string): Promise<User> {
-    return this.userModel.findByIdAndUpdate({ _id }, updateUserDto);
+    if (_id === this.loggedInUserId) {
+      return this.userModel.findByIdAndUpdate({ _id }, updateUserDto);
+    } else {
+      throw new UnauthorizedException('User ID not matched!');
+    }
   }
 
   async deleteUser(_id: string): Promise<User> {
-    return this.userModel.findByIdAndDelete({ _id });
+    if (_id === this.loggedInUserId) {
+      return this.userModel.findByIdAndDelete({ _id });
+    } else {
+      throw new UnauthorizedException('User ID not matched!');
+    }
   }
 
   async loginUser(authDto: AuthDto): Promise<Tokens> {
@@ -99,13 +118,15 @@ export class UserService {
     if (!user)
       throw new UnauthorizedException('Access Denided! User not found!');
 
-    console.log(user);
+    // console.log(user);
     const passwordMatches = await bcrypt.compare(
       authDto.password,
       user.password,
     );
     if (!passwordMatches)
       throw new UnauthorizedException('Access Denided! Password is incorrect!');
+    this.loggedInUserId = user.id;
+    // console.log(this.loggedInUserId);
     const tokens = await this.getTokens(user.username, user.email);
     return tokens;
   }

@@ -23,6 +23,7 @@ export class UserController {
   @Get('/all')
   getUsers() {
     return this.userService.getUsers();
+    // return req.user; @Request req
   }
 
   // if we want to get it by mongodb generated ObjectID "_id"
