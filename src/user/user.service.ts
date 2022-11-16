@@ -51,11 +51,8 @@ export class UserService {
       throw new UnauthorizedException('User ID not matched!');
     }
   }
-
-  async getLoggedInUser(email: string): Promise<User> {
-    return await this.userModel.findOne({ email }).exec();
-  }
-
+  // main use case to get the user from email address.
+  // being used to get the loggedIn user as well.
   async getUserByEmail(email: string): Promise<User> {
     return await this.userModel.findOne({ email }).exec();
   }

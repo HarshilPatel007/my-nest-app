@@ -29,7 +29,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('getUser')
+  @Get('me')
   getloggedInUser(@Request() req: any) {
     return req.user;
   }
