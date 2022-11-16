@@ -1,9 +1,4 @@
-import {
-  HttpException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { HttpStatus } from '@nestjs/common/enums';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
@@ -48,9 +43,6 @@ export class UserService {
   async getUsers(): Promise<User[]> {
     return this.userModel.find().exec();
   }
-  async getUserFromToken(email): Promise<User> {
-    return this.userModel.findOne({ email }).exec();
-  }
 
   async getUser(_id: string): Promise<User> {
     if (_id === this.loggedInUserId) {
@@ -60,39 +52,30 @@ export class UserService {
     }
   }
 
-  // get user by email
-  // async getUserByEmail(email: string): Promise<User> {
-  //   return this.userModel.findOne({
-  //     where: {
-  //       email: email,
-  //     },
-  //   });
-  // }
+  async getLoggedInUser(email: string): Promise<User> {
+    return await this.userModel.findOne({ email }).exec();
+  }
+
+  async getUserByEmail(email: string): Promise<User> {
+    return await this.userModel.findOne({ email }).exec();
+  }
+
+  async getUserByUsername(username: string): Promise<User> {
+    return await this.userModel.findOne({ username }).exec();
+  }
 
   async createUser(createUserDto: CreateUserDto): Promise<Tokens> {
     const { username, email, password, fullname, age } = createUserDto;
-    const username_exist = await this.userModel.findOne({ username });
-    const email_exist = await this.userModel.findOne({ email });
-    if (username_exist) {
-      throw new HttpException('Username already taken!', HttpStatus.CONFLICT);
-    } else if (email_exist) {
-      throw new HttpException(
-        `User with the ${email} already exist!`,
-        HttpStatus.CONFLICT,
-      );
-    } else {
-      // return new this.userModel(createUserDto).save();
-      const hash = await this.hashData(password);
-      const newUser = await this.userModel.create({
-        email,
-        username,
-        password: hash,
-        age,
-        fullname,
-      });
-      const tokens = await this.getTokens(newUser.username, newUser.email);
-      return tokens;
-    }
+    const hash = await this.hashData(password);
+    const newUser = await this.userModel.create({
+      email,
+      username,
+      password: hash,
+      age,
+      fullname,
+    });
+    const tokens = await this.getTokens(newUser.username, newUser.email);
+    return tokens;
   }
 
   // async updateRtHash(username: string, rt: string) {
@@ -125,7 +108,6 @@ export class UserService {
     if (!user)
       throw new UnauthorizedException('Access Denided! User not found!');
 
-    // console.log(user);
     const passwordMatches = await bcrypt.compare(
       authDto.password,
       user.password,
@@ -133,7 +115,6 @@ export class UserService {
     if (!passwordMatches)
       throw new UnauthorizedException('Access Denided! Password is incorrect!');
     this.loggedInUserId = user.id;
-    // console.log(this.loggedInUserId);
     const tokens = await this.getTokens(user.username, user.email);
     return tokens;
   }
