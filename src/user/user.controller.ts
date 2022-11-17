@@ -11,6 +11,7 @@ import {
 import { Body } from '@nestjs/common/decorators';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthDto } from './dto/auth.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserExist } from './guards/user-exists.guard';
@@ -62,5 +63,15 @@ export class UserController {
   @Post('login')
   signinLocal(@Body() authDto: AuthDto): Promise<Tokens> {
     return this.userService.loginUser(authDto);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('password/change')
+  changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @Request() req: any,
+  ) {
+    // return changePasswordDto;
+    return this.userService.changePassword(req, changePasswordDto);
   }
 }

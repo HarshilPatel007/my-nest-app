@@ -1,9 +1,16 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model } from 'mongoose';
 import { AuthDto } from './dto/auth.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocumnet } from './schemas/user.schema';
@@ -100,8 +107,23 @@ export class UserService {
     );
 
     if (!user || !passwordMatches)
-      throw new UnauthorizedException('username or password is incorrect!');
+      throw new UnauthorizedException('email or password is incorrect!');
     const tokens = await this.getTokens(user.username, user.email);
     return tokens;
+  }
+
+  async changePassword(req: any, changePasswordDto: ChangePasswordDto) {
+    const { password, newpassword } = changePasswordDto;
+    const user = await this.userModel.findById(req.user._id);
+    const check_passwd = await bcrypt.compare(password, user.password);
+    if (check_passwd) {
+      const hash = await this.hashData(newpassword);
+      await this.userModel.findByIdAndUpdate(req.user._id, {
+        password: hash,
+      });
+      return new HttpException('Password Changed!', HttpStatus.OK);
+    } else {
+      throw new ForbiddenException('old password is incorrect!');
+    }
   }
 }
