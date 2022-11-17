@@ -26,7 +26,6 @@ export class UserController {
   @Get('all')
   getUsers() {
     return this.userService.getUsers();
-    // return req.user; @Request req
   }
 
   @UseGuards(AuthGuard('jwt'))
