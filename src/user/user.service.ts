@@ -16,8 +16,6 @@ export class UserService {
     private jwtService: JwtService,
   ) {}
 
-  loggedInUserId = '';
-
   hashData(data: string) {
     return bcrypt.hash(data, 10);
   }
@@ -41,16 +39,13 @@ export class UserService {
   }
 
   async getUsers(): Promise<User[]> {
-    return this.userModel.find().exec();
+    return await this.userModel.find().exec();
   }
 
   async getUser(_id: string): Promise<User> {
-    if (_id === this.loggedInUserId) {
-      return this.userModel.findById(_id);
-    } else {
-      throw new UnauthorizedException('User ID not matched!');
-    }
+    return await this.userModel.findById(_id);
   }
+
   // main use case to get the user from email address.
   // being used to get the loggedIn user as well.
   async getUserByEmail(email: string): Promise<User> {
@@ -81,37 +76,31 @@ export class UserService {
 
   // }
 
+  // user can not change password and username
+  // will do that with another route. ie: /user/password/change/
   async updateUser(updateUserDto: UpdateUserDto, _id: string): Promise<User> {
-    if (_id === this.loggedInUserId) {
-      return this.userModel.findByIdAndUpdate({ _id }, updateUserDto);
-    } else {
-      throw new UnauthorizedException('User ID not matched!');
-    }
+    const { email, fullname, age } = updateUserDto;
+    return await this.userModel.findByIdAndUpdate(
+      { _id },
+      { email, age, fullname },
+    );
   }
 
   async deleteUser(_id: string): Promise<User> {
-    if (_id === this.loggedInUserId) {
-      return this.userModel.findByIdAndDelete({ _id });
-    } else {
-      throw new UnauthorizedException('User ID not matched!');
-    }
+    return await this.userModel.findByIdAndDelete({ _id });
   }
 
   async loginUser(authDto: AuthDto): Promise<Tokens> {
     const user = await this.userModel.findOne({
       email: authDto.email,
     });
-
-    if (!user)
-      throw new UnauthorizedException('Access Denided! User not found!');
-
     const passwordMatches = await bcrypt.compare(
       authDto.password,
       user.password,
     );
-    if (!passwordMatches)
-      throw new UnauthorizedException('Access Denided! Password is incorrect!');
-    this.loggedInUserId = user.id;
+
+    if (!user || !passwordMatches)
+      throw new UnauthorizedException('username or password is incorrect!');
     const tokens = await this.getTokens(user.username, user.email);
     return tokens;
   }

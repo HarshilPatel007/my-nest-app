@@ -14,6 +14,7 @@ import { AuthDto } from './dto/auth.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserExist } from './guards/user-exists.guard';
+import { UserUpdate } from './guards/user-update.guard';
 import { Tokens } from './types/tokens.types';
 import { UserService } from './user.service';
 
@@ -21,7 +22,7 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private userService: UserService) {} //dependency injection
 
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
   @Get('all')
   getUsers() {
     return this.userService.getUsers();
@@ -47,19 +48,16 @@ export class UserController {
     return this.userService.createUser(createUserDto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @Patch('update/:userId')
-  updateUser(
-    @Body() updateUserDto: UpdateUserDto,
-    @Param('userId') _id: string,
-  ) {
-    return this.userService.updateUser(updateUserDto, _id);
+  @UseGuards(AuthGuard('jwt'), UserExist, UserUpdate)
+  @Patch('update')
+  updateUser(@Body() updateUserDto: UpdateUserDto, @Request() req: any) {
+    return this.userService.updateUser(updateUserDto, req.user.id);
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Delete('delete/:userId')
-  deleteUser(@Param('userId') _id: string) {
-    return this.userService.deleteUser(_id);
+  @Delete('delete')
+  deleteUser(@Request() req: any) {
+    return this.userService.deleteUser(req.user.id);
   }
 
   @Post('login')
