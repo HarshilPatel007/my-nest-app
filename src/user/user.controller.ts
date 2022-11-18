@@ -71,7 +71,6 @@ export class UserController {
     @Body() changePasswordDto: ChangePasswordDto,
     @Request() req: any,
   ) {
-    // return changePasswordDto;
     return this.userService.changePassword(req, changePasswordDto);
   }
 }

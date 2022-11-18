@@ -6,21 +6,19 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
-import { Model } from 'mongoose';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User, UserDocumnet } from './schemas/user.schema';
 import { Tokens } from './types/tokens.types';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocumnet>,
     private jwtService: JwtService,
+    private prismaService: PrismaService,
   ) {}
 
   hashData(data: string) {
@@ -45,33 +43,39 @@ export class UserService {
     };
   }
 
-  async getUsers(): Promise<User[]> {
-    return await this.userModel.find().exec();
+  async getUsers() {
+    return await this.prismaService.users.findMany();
   }
 
-  async getUser(_id: string): Promise<User> {
-    return await this.userModel.findById(_id);
+  async getUser(_id: string) {
+    return await this.prismaService.users.findUnique({
+      where: { id: _id },
+    });
   }
 
   // main use case to get the user from email address.
   // being used to get the loggedIn user as well.
-  async getUserByEmail(email: string): Promise<User> {
-    return await this.userModel.findOne({ email }).exec();
+  async getUserByEmail(email: string) {
+    return await this.prismaService.users.findUnique({
+      where: { email },
+    });
   }
 
-  async getUserByUsername(username: string): Promise<User> {
-    return await this.userModel.findOne({ username }).exec();
+  async getUserByUsername(username: string) {
+    return await this.prismaService.users.findUnique({ where: { username } });
   }
 
-  async createUser(createUserDto: CreateUserDto): Promise<Tokens> {
+  async createUser(createUserDto: CreateUserDto) {
     const { username, email, password, fullname, age } = createUserDto;
     const hash = await this.hashData(password);
-    const newUser = await this.userModel.create({
-      email,
-      username,
-      password: hash,
-      age,
-      fullname,
+    const newUser = await this.prismaService.users.create({
+      data: {
+        email,
+        username,
+        password: hash,
+        age,
+        fullname,
+      },
     });
     const tokens = await this.getTokens(newUser.username, newUser.email);
     return tokens;
@@ -84,22 +88,25 @@ export class UserService {
   // }
 
   // user can not change password and username
-  // will do that with another route. ie: /user/password/change/
-  async updateUser(updateUserDto: UpdateUserDto, _id: string): Promise<User> {
+  async updateUser(updateUserDto: UpdateUserDto, _id: string) {
     const { email, fullname, age } = updateUserDto;
-    return await this.userModel.findByIdAndUpdate(
-      { _id },
-      { email, age, fullname },
-    );
+    return await this.prismaService.users.update({
+      where: { id: _id },
+      data: { email, age, fullname },
+    });
   }
 
-  async deleteUser(_id: string): Promise<User> {
-    return await this.userModel.findByIdAndDelete({ _id });
+  async deleteUser(_id: string) {
+    return await this.prismaService.users.delete({
+      where: { id: _id },
+    });
   }
 
   async loginUser(authDto: AuthDto): Promise<Tokens> {
-    const user = await this.userModel.findOne({
-      email: authDto.email,
+    const user = await this.prismaService.users.findUnique({
+      where: {
+        email: authDto.email,
+      },
     });
     const passwordMatches = await bcrypt.compare(
       authDto.password,
@@ -114,12 +121,18 @@ export class UserService {
 
   async changePassword(req: any, changePasswordDto: ChangePasswordDto) {
     const { password, newpassword } = changePasswordDto;
-    const user = await this.userModel.findById(req.user._id);
+    const user = await this.prismaService.users.findUnique({
+      where: { id: req.user.id },
+    });
+    console.log(req.user.id);
     const check_passwd = await bcrypt.compare(password, user.password);
     if (check_passwd) {
       const hash = await this.hashData(newpassword);
-      await this.userModel.findByIdAndUpdate(req.user._id, {
-        password: hash,
+      await this.prismaService.users.update({
+        where: { id: req.user.id },
+        data: {
+          password: hash,
+        },
       });
       return new HttpException('Password Changed!', HttpStatus.OK);
     } else {
