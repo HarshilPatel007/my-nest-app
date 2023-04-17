@@ -7,12 +7,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model users {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  // v        Int    @map("__v")
-  age      Int
-  email    String @unique(map: "email_1")
-  fullname String
+model User {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  email    String @unique
+  username String @unique
   password String
-  username String @unique(map: "username_1")
+
+  isAdmin Boolean @default(false)
+
+  createdAt      DateTime? @default(now()) @db.Date
+  updatedAt      DateTime? @updatedAt @db.Date
+  lastLoggedInAt DateTime? @db.Date
+
+  UserDetails UserDetails?
+
+  @@map("USER")
+}
+
+model UserDetails {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique @db.ObjectId
+
+  age      Int
+  fullname String
+  height   Int
+  weight   Int
+  bmi      Int
+
+  @@map("USER_DETAILS")
 }

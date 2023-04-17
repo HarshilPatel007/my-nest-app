@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { users } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
@@ -43,6 +44,11 @@ export class UserService {
     };
   }
 
+  // generate meta field
+  private generateMeta(params: users | CreateUserDto | UpdateUserDto): string {
+    const metaString = `${params.username?.toLowerCase()} | ${params.fullname?.toLowerCase()}`;
+    return metaString;
+  }
   async getUsers() {
     return await this.prismaService.users.findMany();
   }
@@ -75,10 +81,10 @@ export class UserService {
         password: hash,
         age,
         fullname,
+        meta: this.generateMeta(createUserDto),
       },
     });
-    const tokens = await this.getTokens(newUser.username, newUser.email);
-    return tokens;
+    return newUser;
   }
 
   // async updateRtHash(username: string, rt: string) {
@@ -93,6 +99,22 @@ export class UserService {
     return await this.prismaService.users.update({
       where: { id: _id },
       data: { email, age, fullname },
+    });
+  }
+
+  // add meta field to all existing documents/data
+  async updateAllUser(updateUserDto: UpdateUserDto) {
+    const users: users[] = await this.prismaService.users.findMany();
+
+    users.map(async (user) => {
+      updateUserDto.username = user.username;
+      updateUserDto.fullname = user.fullname;
+      await this.prismaService.users.update({
+        where: { id: user.id },
+        data: {
+          meta: this.generateMeta(updateUserDto),
+        },
+      });
     });
   }
 
@@ -124,7 +146,6 @@ export class UserService {
     const user = await this.prismaService.users.findUnique({
       where: { id: req.user.id },
     });
-    console.log(req.user.id);
     const check_passwd = await bcrypt.compare(password, user.password);
     if (check_passwd) {
       const hash = await this.hashData(newpassword);

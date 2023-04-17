@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { Body } from '@nestjs/common/decorators';
 import { AuthGuard } from '@nestjs/passport';
+import { users } from '@prisma/client';
 import { AuthDto } from './dto/auth.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -44,7 +45,7 @@ export class UserController {
 
   @UseGuards(UserExist)
   @Post('create')
-  createUser(@Body() createUserDto: CreateUserDto): Promise<Tokens> {
+  createUser(@Body() createUserDto: CreateUserDto): Promise<users> {
     return this.userService.createUser(createUserDto);
   }
 
@@ -52,6 +53,12 @@ export class UserController {
   @Patch('update')
   updateUser(@Body() updateUserDto: UpdateUserDto, @Request() req: any) {
     return this.userService.updateUser(updateUserDto, req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'), UserExist, UserUpdate)
+  @Patch('update-all')
+  updateAllUser(@Body() updateUserDto: UpdateUserDto) {
+    return this.userService.updateAllUser(updateUserDto);
   }
 
   @UseGuards(AuthGuard('jwt'))

@@ -2,6 +2,7 @@ import {
   IsEmail,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   MaxLength,
   MinLength,
@@ -32,4 +33,8 @@ export class CreateUserDto {
   @IsNumber()
   @IsNotEmpty({ message: 'please provide your age' })
   age: number;
+
+  @IsString()
+  @IsOptional()
+  meta: string;
 }
