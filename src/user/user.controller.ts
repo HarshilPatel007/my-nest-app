@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { Body } from '@nestjs/common/decorators';
 import { AuthGuard } from '@nestjs/passport';
-import { users } from '@prisma/client';
+import { User } from '@prisma/client';
 import { AuthDto } from './dto/auth.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -39,13 +39,13 @@ export class UserController {
   // if we want to get it by mongodb generated ObjectID "_id"
   @UseGuards(AuthGuard('jwt'))
   @Get('get/:userId')
-  getUser(@Param('userId') _id: string) {
-    return this.userService.getUser(_id);
+  getUser(@Param('userId') _id: string, @Request() req: any) {
+    return this.userService.getUser(req, _id);
   }
 
   @UseGuards(UserExist)
   @Post('create')
-  createUser(@Body() createUserDto: CreateUserDto): Promise<users> {
+  createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
     return this.userService.createUser(createUserDto);
   }
 
@@ -55,11 +55,11 @@ export class UserController {
     return this.userService.updateUser(updateUserDto, req.user.id);
   }
 
-  @UseGuards(AuthGuard('jwt'), UserExist, UserUpdate)
-  @Patch('update-all')
-  updateAllUser(@Body() updateUserDto: UpdateUserDto) {
-    return this.userService.updateAllUser(updateUserDto);
-  }
+  // @UseGuards(AuthGuard('jwt'), UserExist, UserUpdate)
+  // @Patch('update-all')
+  // updateAllUser(@Body() updateUserDto: UpdateUserDto) {
+  //   return this.userService.updateAllUser(updateUserDto);
+  // }
 
   @UseGuards(AuthGuard('jwt'))
   @Delete('delete')

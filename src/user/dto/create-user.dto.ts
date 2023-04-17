@@ -26,13 +26,13 @@ export class CreateUserDto {
   @MinLength(8, { message: 'password must be 8 characters long' })
   password: string;
 
-  @IsString({ message: 'fullname must be string' })
-  @IsNotEmpty({ message: 'please provide your full name' })
-  fullname: string;
-
   @IsNumber()
   @IsNotEmpty({ message: 'please provide your age' })
   age: number;
+
+  @IsString({ message: 'fullname must be string' })
+  @IsNotEmpty({ message: 'please provide your full name' })
+  fullname: string;
 
   @IsString()
   @IsOptional()

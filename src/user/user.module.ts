@@ -1,15 +1,22 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config/dist';
 import { JwtModule } from '@nestjs/jwt';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaClient } from '@prisma/client';
+import { PrismaClientManager } from 'src/database/prisma-client-manager';
 import { AtStrategy } from './strategies/at.strategy';
 import { RtStrategy } from './strategies/rt.strategy';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 
 @Module({
-  controllers: [UserController],
-  providers: [UserService, AtStrategy, RtStrategy, PrismaService],
   imports: [JwtModule.register({}), ConfigModule],
+  controllers: [UserController],
+  providers: [
+    AtStrategy,
+    RtStrategy,
+    UserService,
+    PrismaClient,
+    PrismaClientManager,
+  ],
 })
 export class UserModule {}

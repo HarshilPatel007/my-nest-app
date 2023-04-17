@@ -6,9 +6,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { users } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaClientManager } from 'src/database/prisma-client-manager';
 import { AuthDto } from './dto/auth.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,7 +19,8 @@ import { Tokens } from './types/tokens.types';
 export class UserService {
   constructor(
     private jwtService: JwtService,
-    private prismaService: PrismaService,
+    private prismaClient: PrismaClient,
+    private prismaClientManager: PrismaClientManager,
   ) {}
 
   hashData(data: string) {
@@ -45,16 +46,16 @@ export class UserService {
   }
 
   // generate meta field
-  private generateMeta(params: users | CreateUserDto | UpdateUserDto): string {
-    const metaString = `${params.username?.toLowerCase()} | ${params.fullname?.toLowerCase()}`;
+  private generateMeta(req: any): string {
+    const metaString = `${req.username?.toLowerCase()} | ${req.fullname?.toLowerCase()}`;
     return metaString;
   }
   async getUsers() {
-    return await this.prismaService.users.findMany();
+    return await this.prismaClient.user.findMany();
   }
 
-  async getUser(_id: string) {
-    return await this.prismaService.users.findUnique({
+  async getUser(req: any, _id: string) {
+    return await req.prismaClient.user.findUnique({
       where: { id: _id },
     });
   }
@@ -62,26 +63,32 @@ export class UserService {
   // main use case to get the user from email address.
   // being used to get the loggedIn user as well.
   async getUserByEmail(email: string) {
-    return await this.prismaService.users.findUnique({
+    return await this.prismaClient.user.findUnique({
       where: { email },
     });
   }
 
   async getUserByUsername(username: string) {
-    return await this.prismaService.users.findUnique({ where: { username } });
+    return await this.prismaClient.user.findUnique({ where: { username } });
   }
 
   async createUser(createUserDto: CreateUserDto) {
-    const { username, email, password, fullname, age } = createUserDto;
+    const { username, email, password, age, fullname } = createUserDto;
     const hash = await this.hashData(password);
-    const newUser = await this.prismaService.users.create({
+    const prismaClient = await this.prismaClientManager.createDatabase(
+      username,
+    );
+    const newUser = await prismaClient.user.create({
       data: {
         email,
         username,
         password: hash,
-        age,
-        fullname,
-        meta: this.generateMeta(createUserDto),
+        UserDetails: {
+          create: {
+            age,
+            fullname,
+          },
+        },
       },
     });
     return newUser;
@@ -96,36 +103,44 @@ export class UserService {
   // user can not change password and username
   async updateUser(updateUserDto: UpdateUserDto, _id: string) {
     const { email, fullname, age } = updateUserDto;
-    return await this.prismaService.users.update({
+    return await this.prismaClient.user.update({
       where: { id: _id },
-      data: { email, age, fullname },
+      data: {
+        email,
+        UserDetails: {
+          update: {
+            age,
+            fullname,
+          },
+        },
+      },
     });
   }
 
   // add meta field to all existing documents/data
-  async updateAllUser(updateUserDto: UpdateUserDto) {
-    const users: users[] = await this.prismaService.users.findMany();
+  // async updateAllUser(updateUserDto: UpdateUserDto) {
+  //   const users = await this.prismaClient.user.findMany();
 
-    users.map(async (user) => {
-      updateUserDto.username = user.username;
-      updateUserDto.fullname = user.fullname;
-      await this.prismaService.users.update({
-        where: { id: user.id },
-        data: {
-          meta: this.generateMeta(updateUserDto),
-        },
-      });
-    });
-  }
+  //   users.map(async (user) => {
+  //     updateUserDto.username = user.username;
+  //     updateUserDto.fullname = user.userDetails.fullname;
+  //     await this.prismaClient.user.update({
+  //       where: { id: user.id },
+  //       data: {
+  //         meta: this.generateMeta(updateUserDto),
+  //       },
+  //     });
+  //   });
+  // }
 
   async deleteUser(_id: string) {
-    return await this.prismaService.users.delete({
+    return await this.prismaClient.user.delete({
       where: { id: _id },
     });
   }
 
   async loginUser(authDto: AuthDto): Promise<Tokens> {
-    const user = await this.prismaService.users.findUnique({
+    const user = await this.prismaClient.user.findUnique({
       where: {
         email: authDto.email,
       },
@@ -143,13 +158,13 @@ export class UserService {
 
   async changePassword(req: any, changePasswordDto: ChangePasswordDto) {
     const { password, newpassword } = changePasswordDto;
-    const user = await this.prismaService.users.findUnique({
+    const user = await this.prismaClient.user.findUnique({
       where: { id: req.user.id },
     });
     const check_passwd = await bcrypt.compare(password, user.password);
     if (check_passwd) {
       const hash = await this.hashData(newpassword);
-      await this.prismaService.users.update({
+      await this.prismaClient.user.update({
         where: { id: req.user.id },
         data: {
           password: hash,

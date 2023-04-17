@@ -33,9 +33,6 @@ model UserDetails {
 
   age      Int
   fullname String
-  height   Int
-  weight   Int
-  bmi      Int
 
   @@map("USER_DETAILS")
 }
