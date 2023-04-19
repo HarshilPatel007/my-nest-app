@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model DBList {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  dbname String @unique
+
+  @@map("DB_LIST")
+}
+
 model User {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 

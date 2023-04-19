@@ -17,7 +17,7 @@ export class AtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  validate(payload: JwtPayload) {
-    return this.userService.getUserByEmail(payload.email);
+  validate(req: any, payload: JwtPayload) {
+    return this.userService.getUserByEmail(req, payload.email);
   }
 }

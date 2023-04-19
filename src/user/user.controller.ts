@@ -8,7 +8,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { Body } from '@nestjs/common/decorators';
+import { Body, Req } from '@nestjs/common/decorators';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from '@prisma/client';
 import { AuthDto } from './dto/auth.dto';
@@ -37,7 +37,7 @@ export class UserController {
   }
 
   // if we want to get it by mongodb generated ObjectID "_id"
-  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(AuthGuard('jwt'))
   @Get('get/:userId')
   getUser(@Param('userId') _id: string, @Request() req: any) {
     return this.userService.getUser(req, _id);
@@ -45,8 +45,9 @@ export class UserController {
 
   @UseGuards(UserExist)
   @Post('create')
-  createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.userService.createUser(createUserDto);
+  createUser(@Req() req, @Body() createUserDto: CreateUserDto): Promise<User> {
+    console.log('controller!');
+    return this.userService.createUser(req, createUserDto);
   }
 
   @UseGuards(AuthGuard('jwt'), UserExist, UserUpdate)

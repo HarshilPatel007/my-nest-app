@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   HttpException,
   HttpStatus,
@@ -60,24 +61,43 @@ export class UserService {
     });
   }
 
-  // main use case to get the user from email address.
-  // being used to get the loggedIn user as well.
-  async getUserByEmail(email: string) {
-    return await this.prismaClient.user.findUnique({
+  // being used to get the loggedIn user.
+  async getUserByEmail(req: any, email: string) {
+    const user = await req.prismaClient.user.findUnique({
       where: { email },
     });
+    return user;
   }
 
-  async getUserByUsername(username: string) {
-    return await this.prismaClient.user.findUnique({ where: { username } });
+  async getUserByUsername(req: any, username: string) {
+    const user = await req.prismaClient.user.findUnique({
+      where: { username },
+    });
+    return user;
   }
 
-  async createUser(createUserDto: CreateUserDto) {
+  async createUser(req: any, createUserDto: CreateUserDto) {
     const { username, email, password, age, fullname } = createUserDto;
     const hash = await this.hashData(password);
-    const prismaClient = await this.prismaClientManager.createDatabase(
-      username,
-    );
+    //create DB
+    const prismaClient: PrismaClient =
+      await this.prismaClientManager.createDatabase(`db-${username}`);
+
+    if (!req.headers.dbnm) {
+      try {
+        await this.prismaClient.dBList.create({
+          data: {
+            dbname: `db-${username}`,
+          },
+        });
+      } catch (error) {
+        throw new BadRequestException('Database already exists.', {
+          cause: error,
+          description: `If you're trying to create a new user, please change the username OR add 'dbnm' in headers if you have already registered your account.`,
+        });
+      }
+    }
+
     const newUser = await prismaClient.user.create({
       data: {
         email,
@@ -172,7 +192,7 @@ export class UserService {
       });
       return new HttpException('Password Changed!', HttpStatus.OK);
     } else {
-      throw new ForbiddenException('old password is incorrect!');
+      throw new ForbiddenException('Old password is Incorrect!');
     }
   }
 }
