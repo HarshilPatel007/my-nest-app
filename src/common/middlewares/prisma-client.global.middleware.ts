@@ -3,7 +3,7 @@ import { NextFunction } from 'express';
 import { PrismaClientManager } from 'src/database/prisma-client-manager';
 
 /* This is a middleware class that sets up a Prisma client for each incoming request based on
-the database name provided in the request headers. */
+the database name provided in the request headers. Use at Global level. */
 @Injectable()
 export class PrismaClientGlobalMiddleware implements NestMiddleware {
   constructor(private prismaClientManager: PrismaClientManager) {}

@@ -22,7 +22,8 @@ model User {
   username String @unique
   password String
 
-  isAdmin Boolean @default(false)
+  isAdmin         Boolean @default(false)
+  isEmailVerified Boolean @default(false)
 
   createdAt      DateTime? @default(now()) @db.Date
   updatedAt      DateTime? @updatedAt @db.Date

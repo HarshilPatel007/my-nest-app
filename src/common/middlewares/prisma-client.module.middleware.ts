@@ -8,7 +8,7 @@ import { NextFunction } from 'express';
 import { PrismaClientManager } from 'src/database/prisma-client-manager';
 
 /* This is a middleware class that checks if a database exists based on a header value
-and throws an error if it doesn't. */
+and throws an error if it doesn't. Use at Module level. */
 @Injectable()
 export class PrismaClientModuleMiddleware implements NestMiddleware {
   constructor(private prismaClientManager: PrismaClientManager) {}

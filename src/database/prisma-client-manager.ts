@@ -2,7 +2,7 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 
-/* This class manages connections to multiple Prisma databases and provides methods
+/* This class manages connections to multiple databases and provides methods
 for creating, retrieving, and destroying Prisma clients. */
 @Injectable()
 export class PrismaClientManager implements OnModuleInit, OnModuleDestroy {
