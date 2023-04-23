@@ -17,11 +17,6 @@ export class UserService {
     return bcrypt.hash(data, 10);
   }
 
-  // generate meta field
-  private generateMeta(req: any): string {
-    const metaString = `${req.username?.toLowerCase()} | ${req.fullname?.toLowerCase()}`;
-    return metaString;
-  }
   async getUsers(req: any) {
     const users = await req.prismaClient.user.findMany();
     return users;
@@ -70,8 +65,7 @@ export class UserService {
         });
       }
     }
-
-    const createUser = await prismaClient.user.create({
+    const createUser = await req.defaultPrismaClient.user.create({
       data: {
         email,
         username,
@@ -106,22 +100,6 @@ export class UserService {
       },
     });
   }
-
-  // add meta field to all existing documents/data
-  // async updateAllUser(updateUserDto: UpdateUserDto) {
-  //   const users = await this.prismaClient.user.findMany();
-
-  //   users.map(async (user) => {
-  //     updateUserDto.username = user.username;
-  //     updateUserDto.fullname = user.userDetails.fullname;
-  //     await this.prismaClient.user.update({
-  //       where: { id: user.id },
-  //       data: {
-  //         meta: this.generateMeta(updateUserDto),
-  //       },
-  //     });
-  //   });
-  // }
 
   async deleteUser(req: any, _id: string) {
     return await req.prismaClient.user.delete({

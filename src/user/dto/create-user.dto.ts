@@ -33,8 +33,4 @@ export class CreateUserDto {
   @IsString({ message: 'fullname must be string' })
   @IsNotEmpty({ message: 'please provide your full name' })
   fullname: string;
-
-  @IsString()
-  @IsOptional()
-  meta: string;
 }

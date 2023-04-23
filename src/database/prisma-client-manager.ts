@@ -11,10 +11,11 @@ export class PrismaClientManager implements OnModuleInit, OnModuleDestroy {
   private clients: { [key: string]: PrismaClient } = {};
   private defaultPrismaClient: PrismaClient;
 
-  private createConnection(dbNm: string) {
+  private createConnection(dbNm: string): PrismaClient {
     const databaseUrl = this.configService
       .get('DATABASE_URL')
       .replace('DEFAULT', dbNm);
+
     return new PrismaClient({
       datasources: {
         db: {
@@ -60,8 +61,8 @@ export class PrismaClientManager implements OnModuleInit, OnModuleDestroy {
       select: { dbname: true },
     });
     await Promise.all(
-      getAllDb.map(async (db) => {
-        const prismaClient = this.createConnection(db.dbname);
+      getAllDb.map((db) => {
+        const prismaClient: PrismaClient = this.createConnection(db.dbname);
         this.clients[db.dbname] = prismaClient;
         return true;
       }),
@@ -69,7 +70,9 @@ export class PrismaClientManager implements OnModuleInit, OnModuleDestroy {
   }
   async onModuleDestroy() {
     await Promise.all(
-      Object.values(this.clients).map((client) => client.$disconnect()),
+      Object.values(this.clients).map((client: PrismaClient) =>
+        client.$disconnect(),
+      ),
     );
   }
 }

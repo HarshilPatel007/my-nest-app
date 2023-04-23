@@ -49,10 +49,9 @@ export class AuthService {
   // async updateRtHash(username: string, rt: string) {
   //   const hash = await this.hashData(rt);
   //   const user = await this.userModel.where({ username: username });
-
   // }
 
-  async login(req: any, authDto: AuthDto): Promise<Tokens> {
+  async login(req: any, authDto: AuthDto) {
     const user = await this.userService.getUserByEmail(req, authDto.email);
     const passwordMatches = await bcrypt.compare(
       authDto.password,
@@ -62,7 +61,10 @@ export class AuthService {
     if (!user || !passwordMatches)
       throw new UnauthorizedException('Email OR Password Is Incorrect!');
     const tokens = await this.getTokens(user.username, user.email);
-    return tokens;
+    return {
+      user,
+      tokens,
+    };
   }
 
   async changePassword(req: any, changePasswordDto: ChangePasswordDto) {
