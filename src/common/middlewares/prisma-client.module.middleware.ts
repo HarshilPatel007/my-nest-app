@@ -14,7 +14,14 @@ export class PrismaClientModuleMiddleware implements NestMiddleware {
   constructor(private prismaClientManager: PrismaClientManager) {}
   async use(req: any, res: any, next: NextFunction) {
     console.log('module middleware!');
-    if (req.headers.dbnm) {
+    if (!req.headers.dbnm) {
+      throw new BadRequestException(`Required header not found.`, {
+        cause: new Error(),
+        description: `Please provide a 'dbnm' in headers.`,
+      });
+    } else if (req.headers.dbnm === 'default') {
+      next();
+    } else if (req.headers.dbnm) {
       const defaultPrismaClient: PrismaClient =
         await this.prismaClientManager.getDefaultPrismaClient();
 

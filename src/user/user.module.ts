@@ -1,15 +1,9 @@
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config/dist';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaClient } from '@prisma/client';
-import { EmailConfirmationService } from 'src/common/email/email-confirmation.service';
+import { EmailVerificationService } from 'src/common/email/email-verification.service';
 import EmailService from 'src/common/email/email.service';
-import { PrismaClientModuleMiddleware } from 'src/common/middlewares/prisma-client.module.middleware';
 import { PrismaClientManager } from 'src/database/prisma-client-manager';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
@@ -19,17 +13,11 @@ import { UserService } from './user.service';
   controllers: [UserController],
   providers: [
     UserService,
-    EmailConfirmationService,
+    EmailVerificationService,
     EmailService,
     JwtService,
     PrismaClient,
     PrismaClientManager,
   ],
 })
-export class UserModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(PrismaClientModuleMiddleware)
-      .forRoutes({ path: '*', method: RequestMethod.ALL });
-  }
-}
+export class UserModule {}

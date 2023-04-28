@@ -27,7 +27,7 @@ export class PrismaClientManager implements OnModuleInit, OnModuleDestroy {
 
   async getDefaultPrismaClient(): Promise<PrismaClient> {
     if (!this.defaultPrismaClient) {
-      this.defaultPrismaClient = new PrismaClient();
+      return (this.defaultPrismaClient = new PrismaClient());
     }
     return this.defaultPrismaClient;
   }
@@ -56,7 +56,7 @@ export class PrismaClientManager implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    this.getDefaultPrismaClient();
+    await this.getDefaultPrismaClient();
     const getAllDb = await this.defaultPrismaClient.dBList.findMany({
       select: { dbname: true },
     });
@@ -68,6 +68,7 @@ export class PrismaClientManager implements OnModuleInit, OnModuleDestroy {
       }),
     );
   }
+
   async onModuleDestroy() {
     await Promise.all(
       Object.values(this.clients).map((client: PrismaClient) =>

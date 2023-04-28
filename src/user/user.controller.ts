@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { Body, Req } from '@nestjs/common/decorators';
 import { AuthGuard } from '@nestjs/passport';
-import { User } from '@prisma/client';
+import EmailVerificationDto from 'src/common/email/dto/email-verification.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserExist } from './guards/user-exists.guard';
@@ -22,48 +22,44 @@ export class UserController {
 
   // @UseGuards(AuthGuard('jwt'))
   @Get('all')
-  getUsers(@Req() req: any) {
-    return this.userService.getUsers(req);
+  async getUsers(@Req() req: any) {
+    return await this.userService.getUsers(req);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
-  getLoggedInUser(@Req() req: any) {
-    return req.user;
+  async getLoggedInUser(@Req() req: any) {
+    return await req.user;
   }
 
   // if we want to get it by mongodb generated ObjectID "_id"
   // @UseGuards(AuthGuard('jwt'))
   @Get('get/:userId')
-  getUser(@Req() req: any, @Param('userId') _id: string) {
-    return this.userService.getUserById(req, _id);
+  async getUser(@Req() req: any, @Param('userId') _id: string) {
+    return await this.userService.getUserById(req, _id);
   }
 
   @UseGuards(UserExist)
   @Post('create')
-  createUser(
-    @Req() req: any,
-    @Body() createUserDto: CreateUserDto,
-  ): Promise<User> {
+  async createUser(@Req() req: any, @Body() createUserDto: CreateUserDto) {
     console.log('controller!');
-    return this.userService.createUser(req, createUserDto);
+    return await this.userService.createUser(req, createUserDto);
   }
 
   @UseGuards(AuthGuard('jwt'), UserExist, UserUpdate)
   @Patch('update')
-  updateUser(@Req() req: any, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.updateUser(req, updateUserDto, req.user.id);
+  async updateUser(@Req() req: any, @Body() updateUserDto: UpdateUserDto) {
+    return await this.userService.updateUser(req, updateUserDto, req.user.id);
   }
-
-  // @UseGuards(AuthGuard('jwt'), UserExist, UserUpdate)
-  // @Patch('update-all')
-  // updateAllUser(@Body() updateUserDto: UpdateUserDto) {
-  //   return this.userService.updateAllUser(updateUserDto);
-  // }
 
   @UseGuards(AuthGuard('jwt'))
   @Delete('delete')
-  deleteUser(@Req() req: any) {
-    return this.userService.deleteUser(req, req.user.id);
+  async deleteUser(@Req() req: any) {
+    return await this.userService.deleteUser(req, req.user.id);
+  }
+
+  @Post('verify-email')
+  async verify(@Req() req: any, @Body() dto: EmailVerificationDto) {
+    return await this.userService.verifyEmail(req, dto);
   }
 }

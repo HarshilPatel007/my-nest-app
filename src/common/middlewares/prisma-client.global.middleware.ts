@@ -14,7 +14,7 @@ export class PrismaClientGlobalMiddleware implements NestMiddleware {
         req.headers.dbnm,
       );
       req.defaultPrismaClient =
-        this.prismaClientManager.getDefaultPrismaClient();
+        await this.prismaClientManager.getDefaultPrismaClient();
       next();
     }
   }
