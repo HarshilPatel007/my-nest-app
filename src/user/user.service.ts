@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import EmailVerificationDto from 'src/common/email/dto/email-verification.dto';
 import { EmailVerificationService } from 'src/common/email/email-verification.service';
@@ -28,6 +33,7 @@ export class UserService {
     });
     return user;
   }
+
   async getUserByEmail(req: any, email: string) {
     const user = await req.defaultPrismaClient.user.findUnique({
       where: { email },
@@ -45,10 +51,44 @@ export class UserService {
   async createUser(req: any, createUserDto: CreateUserDto) {
     const { username, email, password, age, fullname } = createUserDto;
     const passwordHash = await this.hashData(password);
-    //create DB
-    await this.prismaClientManager.createDatabase(`db-${username}`);
 
     if (req.headers.dbnm === 'default') {
+      // create User
+      try {
+        await req.defaultPrismaClient.user.create({
+          data: {
+            email,
+            username,
+            password: passwordHash,
+            UserDetails: {
+              create: {
+                age,
+                fullname,
+              },
+            },
+          },
+        });
+        await this.emailVerificationService.sendVerificationLink(email);
+      } catch (error) {
+        throw new BadRequestException(
+          'Something went wrong while creating your account.',
+        );
+      }
+
+      // create DB
+      try {
+        await this.prismaClientManager.createDatabase(`db-${username}`);
+      } catch (error) {
+        throw new HttpException(
+          'Something went wrong while creating the database.',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          {
+            cause: error,
+          },
+        );
+      }
+
+      // create DB entry in default DB
       try {
         await req.defaultPrismaClient.dBList.create({
           data: {
@@ -63,27 +103,6 @@ export class UserService {
       }
     } else {
       throw new BadRequestException(`Please provide a 'dbnm' in headers`);
-    }
-
-    try {
-      await req.defaultPrismaClient.user.create({
-        data: {
-          email,
-          username,
-          password: passwordHash,
-          UserDetails: {
-            create: {
-              age,
-              fullname,
-            },
-          },
-        },
-      });
-      await this.emailVerificationService.sendVerificationLink(email);
-    } catch (error) {
-      throw new BadRequestException(
-        'Something went wrong while creating your account.',
-      );
     }
 
     return {

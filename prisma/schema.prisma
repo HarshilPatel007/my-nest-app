@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model EmptyCollection {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  @@map("EMPTY_COLLECTION")
+}
+
 model DBList {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 

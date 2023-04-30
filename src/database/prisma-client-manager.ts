@@ -49,10 +49,12 @@ export class PrismaClientManager implements OnModuleInit, OnModuleDestroy {
     return this.clients;
   }
 
-  async createDatabase(dbNm: string): Promise<PrismaClient> {
+  async createDatabase(dbNm: string) {
     let client: PrismaClient = this.clients[dbNm];
     client = this.createConnection(dbNm);
-    return client;
+    return await client.emptyCollection.create({
+      data: {},
+    });
   }
 
   async onModuleInit() {
