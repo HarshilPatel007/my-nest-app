@@ -68,7 +68,8 @@ export class UserService {
             },
           },
         });
-        await this.emailVerificationService.sendVerificationLink(email);
+        await this.emailVerificationService.sendVerificationTokenLink(email);
+        // await this.emailVerificationService.sendVerificationOTP(email);
       } catch (error) {
         throw new BadRequestException(
           'Something went wrong while creating your account.',

@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { CommonFunctions } from '../common.functions';
 import EmailService from './email.service';
 
 @Injectable()
@@ -15,11 +16,12 @@ export class EmailVerificationService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
+    private readonly commonFunctions: CommonFunctions,
   ) {}
 
   token = '';
 
-  public async sendVerificationLink(email: string) {
+  public async sendVerificationTokenLink(email: string) {
     const payload = { email };
     this.token = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
@@ -32,7 +34,7 @@ export class EmailVerificationService {
 
     const url = `${this.configService.get('MAIL_URL')}?token=${hashedData}`;
 
-    const text = `Welcome to the application.\nTo confirm the email address, click this link: ${url}`;
+    const text = `To confirm the email address, click this link: ${url}`;
 
     return await this.emailService.sendEmail({
       to: email,
@@ -66,5 +68,22 @@ export class EmailVerificationService {
         throw new BadRequestException('Bad verification token!');
       }
     }
+  }
+
+  public async sendVerificationOTP(email: string) {
+    const otp: string = this.commonFunctions.generateRandomString(
+      10,
+      true,
+      true,
+      false,
+    );
+    const text = `Your OTP.\n${otp}`;
+
+    return await this.emailService.sendEmail({
+      to: email,
+      cc: this.configService.get('TEST_EMAIL'),
+      subject: 'Email Verification',
+      text,
+    });
   }
 }
