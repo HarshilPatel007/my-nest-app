@@ -8,9 +8,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { CommonFunctions } from 'src/common/common.functions';
+import { EmailVerificationService } from 'src/common/email/email-verification.service';
 import { UserService } from 'src/user/user.service';
-import { AuthDto } from './dto/auth.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
+import { AuthDto, ChangePasswordDto, ForgotPasswordDto } from './dto/auth.dto';
 import { Tokens } from './types/tokens.types';
 
 @Injectable()
@@ -18,8 +19,12 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private userService: UserService,
-    readonly configService: ConfigService,
+    private readonly configService: ConfigService,
+    private readonly emailVerificationService: EmailVerificationService,
+    private commonFunctions: CommonFunctions,
   ) {}
+
+  private userEmail = '';
 
   private hashData(data: string) {
     return bcrypt.hash(data, 10);
@@ -28,21 +33,33 @@ export class AuthService {
   async getTokens(username: string, email: string): Promise<Tokens> {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
-        { username: username, email },
-        { secret: this.configService.get('JWT_AT_SECRET'), expiresIn: 60 * 30 }, // 30 minutes
+        { username, email },
+        { secret: this.configService.get('JWT_AT_SECRET'), expiresIn: '30m' }, // 30 minutes
       ),
       this.jwtService.signAsync(
-        { username: username, email },
+        { username, email },
         {
           secret: this.configService.get('JWT_RT_SECRET'),
-          expiresIn: 60 * 60 * 24 * 7,
+          expiresIn: '7d',
         }, // one week
       ),
     ]);
 
+    // const accessToken: string = await this.commonFunctions.generateJWTToken(
+    //   { username, email },
+    //   this.configService.get('JWT_AT_SECRET'),
+    //   '30m',
+    // );
+
+    // const refreshToken: string = await this.commonFunctions.generateJWTToken(
+    //   { username, email },
+    //   this.configService.get('JWT_RT_SECRET'),
+    //   '7d',
+    // );
+
     return {
-      access_token: at,
-      refresh_token: rt,
+      accessToken: at,
+      refreshToken: rt,
     };
   }
 
@@ -52,6 +69,7 @@ export class AuthService {
   // }
 
   async login(req: any, authDto: AuthDto) {
+    console.log(req.defaultPrismaClient);
     const user = await this.userService.getUserByEmail(req, authDto.email);
     const passwordMatches = await bcrypt.compare(
       authDto.password,
@@ -74,7 +92,7 @@ export class AuthService {
     const checkPassword = await bcrypt.compare(password, user.password);
     if (checkPassword) {
       const hashPassword = await this.hashData(newpassword);
-      await req.prismaClient.user.update({
+      await req.defaultPrismaClient.user.update({
         where: { id: req.user.id },
         data: {
           password: hashPassword,
@@ -83,6 +101,38 @@ export class AuthService {
       return new HttpException('Password Changed!', HttpStatus.OK);
     } else {
       throw new ForbiddenException('Old Password Is Incorrect!');
+    }
+  }
+
+  async forgotPassword(req: any) {
+    const user = await this.userService.getUserByEmail(req, req.body.email);
+    if (user) {
+      this.userEmail = user.email;
+      console.log(this.userEmail);
+      await this.emailVerificationService.sendVerificationOTP(user.email);
+    }
+  }
+
+  async verifyOTPForForgotPassword(
+    req: any,
+    forgotPasswordDto: ForgotPasswordDto,
+  ) {
+    const { newpassword, otp } = forgotPasswordDto;
+
+    const verifyOTP = await this.emailVerificationService.verifyOTP(otp);
+
+    if (verifyOTP) {
+      const hashPassword = await this.hashData(newpassword);
+      console.log(this.userEmail);
+
+      await req.defaultPrismaClient.user.update({
+        where: { email: this.userEmail },
+        data: {
+          password: hashPassword,
+        },
+      });
+
+      return new HttpException('Password Changed!', HttpStatus.OK);
     }
   }
 }

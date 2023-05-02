@@ -1,7 +1,7 @@
 import {
-  BadRequestException,
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
@@ -17,9 +17,9 @@ export class UserUpdate implements CanActivate {
 
   async validateRequest(req: any) {
     if (req.body.username) {
-      throw new BadRequestException('Can not update username!');
+      throw new ForbiddenException('Can not update username!');
     } else if (req.body.password) {
-      throw new BadRequestException('Can not update password!');
+      throw new ForbiddenException('Can not update password!');
     } else {
       return true;
     }

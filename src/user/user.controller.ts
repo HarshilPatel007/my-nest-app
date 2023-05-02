@@ -20,7 +20,7 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private userService: UserService) {}
 
-  // @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'))
   @Get('all')
   async getUsers(@Req() req: any) {
     return await this.userService.getUsers(req);
@@ -33,9 +33,10 @@ export class UserController {
   }
 
   // if we want to get it by mongodb generated ObjectID "_id"
-  // @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'))
   @Get('get/:userId')
   async getUser(@Req() req: any, @Param('userId') _id: string) {
+    console.log('controller', req.defaultPrismaClient);
     return await this.userService.getUserById(req, _id);
   }
 

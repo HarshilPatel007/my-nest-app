@@ -19,16 +19,23 @@ export class EmailVerificationService {
     private readonly commonFunctions: CommonFunctions,
   ) {}
 
-  token = '';
+  private token = '';
+  private otp = '';
 
   public async sendVerificationTokenLink(email: string) {
-    const payload = { email };
-    this.token = this.jwtService.sign(payload, {
-      secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
-      expiresIn: `${this.configService.get(
-        'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME',
-      )}s`,
-    });
+    // const payload = { email };
+    // this.token = this.jwtService.sign(payload, {
+    //   secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
+    //   expiresIn: `${this.configService.get(
+    //     'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME',
+    //   )}s`,
+    // });
+
+    this.token = await this.commonFunctions.generateJWTToken(
+      { email },
+      this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
+      `${this.configService.get('JWT_VERIFICATION_TOKEN_EXPIRATION_TIME')}s`,
+    );
 
     const hashedData = await bcrypt.hash(this.token, 10);
 
@@ -71,13 +78,14 @@ export class EmailVerificationService {
   }
 
   public async sendVerificationOTP(email: string) {
-    const otp: string = this.commonFunctions.generateRandomString(
+    this.otp = this.commonFunctions.generateRandomString(
       10,
+      true,
       true,
       true,
       false,
     );
-    const text = `Your OTP.\n${otp}`;
+    const text = `Your OTP.\n${this.otp}`;
 
     return await this.emailService.sendEmail({
       to: email,
@@ -85,5 +93,13 @@ export class EmailVerificationService {
       subject: 'Email Verification',
       text,
     });
+  }
+
+  public async verifyOTP(otp: string) {
+    if (this.otp !== otp) {
+      throw new HttpException(`Invalid OTP!`, HttpStatus.FORBIDDEN);
+    } else {
+      return true;
+    }
   }
 }

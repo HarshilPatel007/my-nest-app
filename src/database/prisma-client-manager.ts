@@ -27,8 +27,10 @@ export class PrismaClientManager implements OnModuleInit, OnModuleDestroy {
 
   async getDefaultPrismaClient(): Promise<PrismaClient> {
     if (!this.defaultPrismaClient) {
+      console.log('defPrismaClient-1');
       return (this.defaultPrismaClient = new PrismaClient());
     }
+    console.log('defPrismaClient-2');
     return this.defaultPrismaClient;
   }
 

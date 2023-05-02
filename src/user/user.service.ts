@@ -28,16 +28,20 @@ export class UserService {
   }
 
   async getUserById(req: any, _id: string) {
+    console.log(req.prismaClient);
     const user = await req.defaultPrismaClient.user.findUnique({
       where: { id: _id },
     });
+    if (!user) throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
     return user;
   }
 
   async getUserByEmail(req: any, email: string) {
+    console.log(req);
     const user = await req.defaultPrismaClient.user.findUnique({
       where: { email },
     });
+    if (!user) throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
     return user;
   }
 
@@ -45,6 +49,7 @@ export class UserService {
     const user = await req.defaultPrismaClient.user.findUnique({
       where: { username },
     });
+    if (!user) throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
     return user;
   }
 
@@ -69,7 +74,6 @@ export class UserService {
           },
         });
         await this.emailVerificationService.sendVerificationTokenLink(email);
-        // await this.emailVerificationService.sendVerificationOTP(email);
       } catch (error) {
         throw new BadRequestException(
           'Something went wrong while creating your account.',
