@@ -20,20 +20,20 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt-access'))
   @Get('all')
   async getUsers(@Req() req: any) {
     return await this.userService.getUsers(req);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt-access'))
   @Get('me')
   async getLoggedInUser(@Req() req: any) {
     return await req.user;
   }
 
   // if we want to get it by mongodb generated ObjectID "_id"
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt-access'))
   @Get('get/:userId')
   async getUser(@Req() req: any, @Param('userId') _id: string) {
     console.log('controller', req.defaultPrismaClient);
@@ -47,13 +47,13 @@ export class UserController {
     return await this.userService.createUser(req, createUserDto);
   }
 
-  @UseGuards(AuthGuard('jwt'), UserExist, UserUpdate)
+  @UseGuards(AuthGuard('jwt-access'), UserExist, UserUpdate)
   @Patch('update')
   async updateUser(@Req() req: any, @Body() updateUserDto: UpdateUserDto) {
     return await this.userService.updateUser(req, updateUserDto, req.user.id);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt-access'))
   @Delete('delete')
   async deleteUser(@Req() req: any) {
     return await this.userService.deleteUser(req, req.user.id);

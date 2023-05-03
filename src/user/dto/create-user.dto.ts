@@ -2,7 +2,6 @@ import {
   IsEmail,
   IsNotEmpty,
   IsNumber,
-  IsOptional,
   IsString,
   MaxLength,
   MinLength,
@@ -13,7 +12,7 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'username is required' })
   @MinLength(4, { message: 'username must be 4 characters long' })
   @MaxLength(20, {
-    message: "usename shouldn't be more than 20 characters",
+    message: "username shouldn't be more than 20 characters",
   })
   username: string;
 
