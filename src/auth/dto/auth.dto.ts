@@ -31,3 +31,8 @@ export class ForgotPasswordDto {
   @IsNotEmpty({ message: 'please enter OTP' })
   otp: string;
 }
+
+export class LoginOTPDto {
+  @IsNotEmpty({ message: 'please enter OTP' })
+  otp: string;
+}

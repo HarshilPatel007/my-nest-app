@@ -4,16 +4,13 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
 import { UserService } from '../user.service';
 
 @Injectable()
 export class UserExist implements CanActivate {
   constructor(private readonly userService: UserService) {}
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     console.log('guard!');
     const req = context.switchToHttp().getRequest();
     return this.validateRequest(req);

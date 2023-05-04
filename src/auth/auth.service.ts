@@ -8,10 +8,14 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { CommonFunctions } from 'src/common/common.functions';
 import { EmailVerificationService } from 'src/common/email/email-verification.service';
 import { UserService } from 'src/user/user.service';
-import { AuthDto, ChangePasswordDto, ForgotPasswordDto } from './dto/auth.dto';
+import {
+  AuthDto,
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  LoginOTPDto,
+} from './dto/auth.dto';
 import { Tokens } from './types/tokens.types';
 
 @Injectable()
@@ -21,12 +25,12 @@ export class AuthService {
     private userService: UserService,
     private readonly configService: ConfigService,
     private readonly emailVerificationService: EmailVerificationService,
-    private commonFunctions: CommonFunctions,
   ) {}
 
   private userEmail = '';
+  private loginTokens: Tokens = { accessToken: '', refreshToken: '' };
 
-  private hashData(data: string) {
+  private hashData(data: string): Promise<string> {
     return bcrypt.hash(data, 10);
   }
 
@@ -45,18 +49,6 @@ export class AuthService {
       ),
     ]);
 
-    // const accessToken: string = await this.commonFunctions.generateJWTToken(
-    //   { username, email },
-    //   this.configService.get('JWT_AT_SECRET'),
-    //   '30m',
-    // );
-
-    // const refreshToken: string = await this.commonFunctions.generateJWTToken(
-    //   { username, email },
-    //   this.configService.get('JWT_RT_SECRET'),
-    //   '7d',
-    // );
-
     return {
       accessToken: at,
       refreshToken: rt,
@@ -69,16 +61,27 @@ export class AuthService {
   // }
 
   async login(req: any, authDto: AuthDto) {
-    console.log(req.defaultPrismaClient);
     const user = await this.userService.getUserByEmail(req, authDto.email);
-    const passwordMatches = await bcrypt.compare(
+    const passwordMatches: boolean = await bcrypt.compare(
       authDto.password,
       user.password,
     );
 
     if (!user || !passwordMatches)
       throw new UnauthorizedException('Email OR Password Is Incorrect!');
+
     const tokens = await this.getTokens(user.username, user.email);
+
+    this.loginTokens.accessToken = tokens.accessToken;
+    this.loginTokens.refreshToken = tokens.refreshToken;
+
+    if (user.is2FAEnabled) {
+      await this.emailVerificationService.sendVerificationOTP(user.email);
+      return {
+        tokens: this.loginTokens,
+      };
+    }
+
     return {
       user,
       tokens,
@@ -89,9 +92,12 @@ export class AuthService {
     const { password, newpassword } = changePasswordDto;
     const user = await this.userService.getUserById(req, req.user.id);
 
-    const checkPassword = await bcrypt.compare(password, user.password);
+    const checkPassword: boolean = await bcrypt.compare(
+      password,
+      user.password,
+    );
     if (checkPassword) {
-      const hashPassword = await this.hashData(newpassword);
+      const hashPassword: string = await this.hashData(newpassword);
       await req.defaultPrismaClient.user.update({
         where: { id: req.user.id },
         data: {
@@ -108,7 +114,6 @@ export class AuthService {
     const user = await this.userService.getUserByEmail(req, req.body.email);
     if (user) {
       this.userEmail = user.email;
-      console.log(this.userEmail);
       await this.emailVerificationService.sendVerificationOTP(user.email);
     }
   }
@@ -119,11 +124,12 @@ export class AuthService {
   ) {
     const { newpassword, otp } = forgotPasswordDto;
 
-    const verifyOTP = await this.emailVerificationService.verifyOTP(otp);
+    const verifyOTP: boolean = await this.emailVerificationService.verifyOTP(
+      otp,
+    );
 
     if (verifyOTP) {
-      const hashPassword = await this.hashData(newpassword);
-      console.log(this.userEmail);
+      const hashPassword: string = await this.hashData(newpassword);
 
       await req.defaultPrismaClient.user.update({
         where: { email: this.userEmail },
@@ -133,6 +139,30 @@ export class AuthService {
       });
 
       return new HttpException('Password Changed!', HttpStatus.OK);
+    }
+  }
+
+  async verifyOTPForLogin(req: any, loginOTPDto: LoginOTPDto) {
+    const { otp } = loginOTPDto;
+    const verifyOTP: boolean = await this.emailVerificationService.verifyOTP(
+      otp,
+    );
+
+    if (verifyOTP) {
+      const payload = await this.jwtService.verify(
+        this.loginTokens.accessToken,
+        {
+          secret: this.configService.get('JWT_AT_SECRET'),
+        },
+      );
+      const email: string = payload.email;
+
+      const user = await this.userService.getUserByEmail(req, email);
+
+      return {
+        user,
+        tokens: this.loginTokens,
+      };
     }
   }
 }

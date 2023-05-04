@@ -31,6 +31,8 @@ model User {
   isAdmin         Boolean @default(false)
   isEmailVerified Boolean @default(false)
 
+  is2FAEnabled Boolean @default(false)
+
   createdAt      DateTime? @default(now()) @db.Date
   updatedAt      DateTime? @updatedAt @db.Date
   lastLoggedInAt DateTime? @db.Date

@@ -1,9 +1,6 @@
-import { JwtService } from '@nestjs/jwt';
 import { webcrypto } from 'node:crypto';
 
 export class CommonFunctions {
-  constructor(private jwtService: JwtService) {}
-
   /**
    * This function generates and return a random string of a specified length with options for including digits,
    * alphabets (lowercase and uppercase), and special characters.
@@ -43,18 +40,5 @@ export class CommonFunctions {
     ).map((value): string => characterSet[value % characterSet.length]);
 
     return randomString.join('');
-  }
-
-  public async generateJWTToken(
-    obj: object,
-    tokenSecret: string,
-    TokenExpireTime: string,
-  ): Promise<string> {
-    const token: string = await this.jwtService.signAsync(obj, {
-      secret: tokenSecret,
-      expiresIn: TokenExpireTime,
-    });
-
-    return token;
   }
 }

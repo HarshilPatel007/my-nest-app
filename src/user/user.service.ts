@@ -15,7 +15,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UserService {
   constructor(
     private prismaClientManager: PrismaClientManager,
-    private readonly emailVerificationService: EmailVerificationService,
+    private emailVerificationService: EmailVerificationService,
   ) {}
 
   private hashData(data: string) {
@@ -32,7 +32,6 @@ export class UserService {
     const user = await req.defaultPrismaClient.user.findUnique({
       where: { id: _id },
     });
-    if (!user) throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
     return user;
   }
 
@@ -41,7 +40,6 @@ export class UserService {
     const user = await req.defaultPrismaClient.user.findUnique({
       where: { email },
     });
-    if (!user) throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
     return user;
   }
 
@@ -49,7 +47,6 @@ export class UserService {
     const user = await req.defaultPrismaClient.user.findUnique({
       where: { username },
     });
-    if (!user) throw new HttpException('User not found!', HttpStatus.NOT_FOUND);
     return user;
   }
 

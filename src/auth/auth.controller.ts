@@ -2,7 +2,12 @@ import { Controller, Patch, Post, UseGuards } from '@nestjs/common';
 import { Body, Get, Req } from '@nestjs/common/decorators';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { AuthDto, ChangePasswordDto, ForgotPasswordDto } from './dto/auth.dto';
+import {
+  AuthDto,
+  ChangePasswordDto,
+  ForgotPasswordDto,
+  LoginOTPDto,
+} from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -27,11 +32,16 @@ export class AuthController {
     return this.authService.forgotPassword(req);
   }
 
-  @Patch('password/verify-forgot-password')
+  @Patch('password/verify-otp')
   verifyOTPForForgotPassword(
     @Req() req: any,
     @Body() forgotPasswordDto: ForgotPasswordDto,
   ) {
     return this.authService.verifyOTPForForgotPassword(req, forgotPasswordDto);
+  }
+
+  @Post('login/verify-otp')
+  verifyOTPForLogin(@Req() req: any, @Body() loginOTPDto: LoginOTPDto) {
+    return this.authService.verifyOTPForLogin(req, loginOTPDto);
   }
 }

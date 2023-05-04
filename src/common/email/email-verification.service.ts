@@ -13,33 +13,27 @@ import EmailService from './email.service';
 @Injectable()
 export class EmailVerificationService {
   constructor(
-    private readonly jwtService: JwtService,
+    private jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly emailService: EmailService,
-    private readonly commonFunctions: CommonFunctions,
+    private emailService: EmailService,
+    private commonFunctions: CommonFunctions,
   ) {}
 
   private token = '';
   private otp = '';
 
   public async sendVerificationTokenLink(email: string) {
-    // const payload = { email };
-    // this.token = this.jwtService.sign(payload, {
-    //   secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
-    //   expiresIn: `${this.configService.get(
-    //     'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME',
-    //   )}s`,
-    // });
+    const payload = { email };
+    this.token = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
+      expiresIn: `${this.configService.get(
+        'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME',
+      )}s`,
+    });
 
-    this.token = await this.commonFunctions.generateJWTToken(
-      { email },
-      this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
-      `${this.configService.get('JWT_VERIFICATION_TOKEN_EXPIRATION_TIME')}s`,
-    );
+    const hashToken = await bcrypt.hash(this.token, 10);
 
-    const hashedData = await bcrypt.hash(this.token, 10);
-
-    const url = `${this.configService.get('MAIL_URL')}?token=${hashedData}`;
+    const url = `${this.configService.get('MAIL_URL')}?token=${hashToken}`;
 
     const text = `To confirm the email address, click this link: ${url}`;
 
@@ -67,7 +61,6 @@ export class EmailVerificationService {
         if (typeof payload === 'object' && 'email' in payload) {
           return payload.email;
         }
-        throw new BadRequestException();
       } catch (error) {
         if (error?.name === 'TokenExpiredError') {
           throw new BadRequestException('Verification token expired!');
