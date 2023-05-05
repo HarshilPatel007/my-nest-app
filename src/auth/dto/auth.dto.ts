@@ -36,3 +36,15 @@ export class LoginOTPDto {
   @IsNotEmpty({ message: 'please enter OTP' })
   otp: string;
 }
+
+export class Skip2FADto {
+  @IsEmail({ message: 'please enter email address' })
+  @IsNotEmpty({ message: 'email is required' })
+  email: string;
+}
+
+export class CheckSkip2FADto {
+  @IsEmail({ message: 'please enter email address' })
+  @IsNotEmpty({ message: 'email is required' })
+  email: string;
+}

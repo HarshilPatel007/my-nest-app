@@ -32,6 +32,8 @@ model User {
   isEmailVerified Boolean @default(false)
 
   is2FAEnabled Boolean @default(false)
+  skip2FA      Boolean @default(false)
+  skip2FAToken String  @default("")
 
   createdAt      DateTime? @default(now()) @db.Date
   updatedAt      DateTime? @updatedAt @db.Date

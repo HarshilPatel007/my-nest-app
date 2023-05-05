@@ -29,6 +29,7 @@ export class EmailVerificationService {
       expiresIn: `${this.configService.get(
         'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME',
       )}s`,
+      // expiresIn: '55s',
     });
 
     const hashToken = await bcrypt.hash(this.token, 10);

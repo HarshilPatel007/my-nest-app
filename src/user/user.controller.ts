@@ -47,6 +47,11 @@ export class UserController {
     return await this.userService.createUser(req, createUserDto);
   }
 
+  @Post('create/verify-email')
+  async verify(@Req() req: any, @Body() dto: EmailVerificationDto) {
+    return await this.userService.verifyEmail(req, dto);
+  }
+
   @UseGuards(AuthGuard('jwt-access'), UserExist, UserUpdate)
   @Patch('update')
   async updateUser(@Req() req: any, @Body() updateUserDto: UpdateUserDto) {
@@ -57,10 +62,5 @@ export class UserController {
   @Delete('delete')
   async deleteUser(@Req() req: any) {
     return await this.userService.deleteUser(req, req.user.id);
-  }
-
-  @Post('verify-email')
-  async verify(@Req() req: any, @Body() dto: EmailVerificationDto) {
-    return await this.userService.verifyEmail(req, dto);
   }
 }
