@@ -28,7 +28,6 @@ export class UserService {
   }
 
   async getUserById(req: any, _id: string) {
-    console.log(req.prismaClient);
     const user = await req.defaultPrismaClient.user.findUnique({
       where: { id: _id },
     });
@@ -36,7 +35,6 @@ export class UserService {
   }
 
   async getUserByEmail(req: any, email: string) {
-    console.log(req);
     const user = await req.defaultPrismaClient.user.findUnique({
       where: { email },
     });
@@ -115,6 +113,7 @@ export class UserService {
   // user can not update password and username
   async updateUser(req: any, updateUserDto: UpdateUserDto, _id: string) {
     const { email, fullname, age } = updateUserDto;
+
     return await req.defaultPrismaClient.user.update({
       where: { id: _id },
       data: {
@@ -146,18 +145,28 @@ export class UserService {
 
   async verifyEmail(req: any, dto: EmailVerificationDto) {
     let getEmailFromToken = '';
+
     getEmailFromToken =
       await this.emailVerificationService.decodeVerificationToken(dto.token);
     const user = await this.getUserByEmail(req, getEmailFromToken);
+
     if (!user) {
       throw new BadRequestException('User not found!');
     }
+
     if (user.isEmailVerified) {
       throw new BadRequestException('Email address is already verified!');
     }
-    await this.markEmailAsVerified(req, getEmailFromToken);
-    return {
-      message: 'Email address is verified!',
-    };
+
+    try {
+      await this.markEmailAsVerified(req, getEmailFromToken);
+    } catch (error) {
+      throw new HttpException(
+        'Something went wrong while verifying your email.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    } finally {
+      throw new HttpException('Email address is now verified!', HttpStatus.OK);
+    }
   }
 }

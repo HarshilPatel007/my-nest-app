@@ -6,6 +6,7 @@ import {
   AuthDto,
   ChangePasswordDto,
   CheckSkip2FADto,
+  Enable2FADto,
   ForgotPasswordDto,
   LoginOTPDto,
   Skip2FADto,
@@ -23,6 +24,11 @@ export class AuthController {
   @Post('login/verify-otp')
   verifyOTPForLogin(@Req() req: any, @Body() loginOTPDto: LoginOTPDto) {
     return this.authService.verifyOTPForLogin(req, loginOTPDto);
+  }
+
+  @Patch('login/enable-2fa')
+  enable2FA(@Req() req: any, @Body() enable2FADto: Enable2FADto) {
+    return this.authService.enable2FA(req, enable2FADto);
   }
 
   @Patch('login/enable-skip2fa')

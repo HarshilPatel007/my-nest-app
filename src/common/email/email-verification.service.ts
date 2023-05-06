@@ -26,10 +26,7 @@ export class EmailVerificationService {
     const payload = { email };
     this.token = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
-      expiresIn: `${this.configService.get(
-        'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME',
-      )}s`,
-      // expiresIn: '55s',
+      expiresIn: '30m',
     });
 
     const hashToken = await bcrypt.hash(this.token, 10);

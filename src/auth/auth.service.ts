@@ -15,6 +15,7 @@ import {
   AuthDto,
   ChangePasswordDto,
   CheckSkip2FADto,
+  Enable2FADto,
   ForgotPasswordDto,
   LoginOTPDto,
   Skip2FADto,
@@ -41,14 +42,11 @@ export class AuthService {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
         { username, email },
-        { secret: this.configService.get('JWT_AT_SECRET'), expiresIn: '30m' }, // 30 minutes
+        { secret: this.configService.get('JWT_AT_SECRET'), expiresIn: '30m' },
       ),
       this.jwtService.signAsync(
         { username, email },
-        {
-          secret: this.configService.get('JWT_RT_SECRET'),
-          expiresIn: '7d',
-        }, // one week
+        { secret: this.configService.get('JWT_RT_SECRET'), expiresIn: '7d' },
       ),
     ]);
 
@@ -82,16 +80,17 @@ export class AuthService {
         };
       } else {
         await this.emailVerificationService.sendVerificationOTP(user.email);
+        return {
+          message: 'The OTP has been sent to your mail.',
+          user,
+        };
       }
-      // return {
-      //   token: this.loginTokens.accessToken,
-      // };
+    } else {
+      return {
+        user,
+        tokens,
+      };
     }
-
-    return {
-      user,
-      tokens,
-    };
   }
 
   async changePassword(req: any, changePasswordDto: ChangePasswordDto) {
@@ -178,23 +177,61 @@ export class AuthService {
     }
   }
 
+  async enable2FA(req: any, enable2FADto: Enable2FADto) {
+    const { email } = enable2FADto;
+
+    const user = await this.userService.getUserByEmail(req, email);
+
+    if (!user.is2FAEnabled) {
+      await req.defaultPrismaClient.user.update({
+        where: { email: user.email },
+        data: {
+          is2FAEnabled: true,
+        },
+      });
+      throw new HttpException(
+        '2 Factor Authentication Is Now Enabled!',
+        HttpStatus.OK,
+      );
+    } else {
+      throw new UnauthorizedException(
+        '2 Factor Authentication Is Already Enabled!',
+      );
+    }
+  }
+
   async enableSkip2FA(req: any, skip2FADto: Skip2FADto) {
     const { email } = skip2FADto;
 
     const user = await this.userService.getUserByEmail(req, email);
 
-    const skip2FAToken: string = this.jwtService.sign(user.email, {
-      secret: this.configService.get('JWT_SKIP2FA_TOKEN_SECRET'),
-      expiresIn: '5m',
-    });
+    if (user.is2FAEnabled) {
+      if (!user.skip2FA) {
+        const skip2FAToken: string = this.jwtService.sign(
+          { email },
+          {
+            secret: this.configService.get('JWT_SKIP2FA_TOKEN_SECRET'),
+            expiresIn: '5m',
+          },
+        );
 
-    return await req.defaultPrismaClient.user.update({
-      where: { email: user.email },
-      data: {
-        skip2FA: true,
-        skip2FAToken,
-      },
-    });
+        return await req.defaultPrismaClient.user.update({
+          where: { email: user.email },
+          data: {
+            skip2FA: true,
+            skip2FAToken,
+          },
+        });
+      } else {
+        throw new UnauthorizedException(
+          'Skip 2 Factor Authentication Is Already Enabled!',
+        );
+      }
+    } else {
+      throw new UnauthorizedException(
+        'Please Enable 2 Factor Authentication First!',
+      );
+    }
   }
 
   async checkSkip2FA(req: any, checkSkip2FADto: CheckSkip2FADto) {
@@ -202,7 +239,7 @@ export class AuthService {
 
     const user = await this.userService.getUserByEmail(req, email);
 
-    if (user.skip2FAToken !== null && user.skip2FA === true) {
+    if (user.skip2FAToken.length !== 0 && user.skip2FA === true) {
       try {
         await this.jwtService.verify(user.skip2FAToken, {
           secret: this.configService.get('JWT_SKIP2FA_TOKEN_SECRET'),
@@ -213,22 +250,12 @@ export class AuthService {
             where: { email: user.email },
             data: {
               skip2FA: false,
-              skip2FAToken: null,
+              skip2FAToken: '',
             },
           });
-          // return {
-          //   user,
-          //   tokens: this.loginTokens,
-          // };
         }
         throw new BadRequestException('Bad verification token!');
       }
     }
-    // } else {
-    //   return {
-    //     user,
-    //     tokens: this.loginTokens,
-    //   };
-    // }
   }
 }
