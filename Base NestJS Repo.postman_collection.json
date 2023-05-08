@@ -1,0 +1,446 @@
+{
+	"info": {
+		"_postman_id": "2e4601d4-2a94-43ad-95b9-c1b08a562de5",
+		"name": "Base NestJS Repo",
+		"description": "# 📋 Get started here\n\nPostman provides dynamic variables that use the [Faker library](https://www.npmjs.com/package/@faker-js/faker) to generate sample data, including random names, addresses, and email addresses.\n\nThis template demonstrates the use of dynamic variables to create randomized mock data. The examples in this collection utilize various data types and showcase how dynamic variables can help simulate real-world data within your API testing environment.\n\n## 🔖 How to use this template\n\n**Step 1: Send requests**\n\nSelect a request from the collection, review the request parameters and pre-request scripts, then hit \"Send\" to execute the request.\n\n**Step 2: Review the \"Body\" and \"Pre-request Script\"** **tabs**\n\nUnderstand how dynamic variables are used to generate mock data. Dynamic variables can be used in the request URL and Body, or even as part of a Pre-Request or Test script for more complex use cases (see \"Create mock blog post\" request).\n\n**Step 3: Customize (optional)**\n\nCustomize dynamic variables to better suit your specific use case. Save the changes, and execute the requests.\n\n**Step 4: Analyze responses**\n\nExamine the response body to see the generated mock data. Note that the responses will be different each time you send the request, as the dynamic variables ensure randomized data generation.\n\nEnjoy testing with diverse and dynamic data!\n\n## ℹ️ Resources\n\n[Dynamic variables](https://learning.postman.com/docs/writing-scripts/script-references/variables-list/)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25378691"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"Fritz.Hegmann@yahoo.com\",\r\n    \"password\": \"Pass@123#123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/auth/login/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Check skip2FA",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"Fritz.Hegmann@yahoo.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/auth/login/check-skip2fa/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"login",
+								"check-skip2fa",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Login OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"otp\" : \"g51EfeWJ0i\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/auth/login/verify-otp/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"login",
+								"verify-otp",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Enable skip2FA",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"Fritz.Hegmann@yahoo.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/auth/login/enable-skip2fa/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"login",
+								"enable-skip2fa",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"sevita6513339@meidecn.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/auth/password/forgot/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"forgot",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Forgot Password OTP",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"newpassword\": \"ThisIsMyPassword\",\r\n    \"otp\": \"yRRpjByWhL\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/auth/password/forgot/verify-otp/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"forgot",
+								"verify-otp",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"password\": \"MyPassword\",\r\n    \"newpassword\": \"MyNewPassword\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/auth/password/change/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"change",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Enable 2FA",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"Fritz.Hegmann@yahoo.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/auth/login/enable-2fa/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"auth",
+								"login",
+								"enable-2fa",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{$randomEmail}}\",\n    \"username\": \"{{$randomUserName}}\",\n    \"password\": \"Pass@123#123\",\n    \"fullname\": \"{{$randomFullName}}\",\n    \"age\": 23\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/user/create/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"user",
+								"create",
+								""
+							]
+						},
+						"description": "This request shows an example of generating mock user data in the request body. You can use this to populate some users for testing your API or application, or to ensure that your API accepts a range of inputs within certain parameters."
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AuthToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"token\" : \"$2b$10$X1A2yOYL5ODzJzCiarkBGOcwTnQ5l09ed0Fze6FZ87B4qIns8RS76\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/user/create/verify-email/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"user",
+								"create",
+								"verify-email",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User By ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AuthToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "dbnm",
+								"value": "default",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{url}}/user/get/6454fcb8b4858495db23a754",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"user",
+								"get",
+								"6454fcb8b4858495db23a754"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://postman-echo.com",
+			"type": "string"
+		}
+	]
+}
