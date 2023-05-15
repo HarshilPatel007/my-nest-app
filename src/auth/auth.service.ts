@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { EmailVerificationService } from 'src/common/email/email-verification.service';
 import { UserService } from 'src/user/user.service';
@@ -57,7 +58,10 @@ export class AuthService {
   }
 
   async login(req: any, authDto: AuthDto) {
-    const user = await this.userService.getUserByEmail(req, authDto.email);
+    const user: User = await this.userService.getUserByEmail(
+      req,
+      authDto.email,
+    );
 
     const passwordMatches: boolean = await bcrypt.compare(
       authDto.password,
@@ -96,7 +100,7 @@ export class AuthService {
   async changePassword(req: any, changePasswordDto: ChangePasswordDto) {
     const { password, newpassword } = changePasswordDto;
 
-    const user = await this.userService.getUserById(req, req.user.id);
+    const user: User = await this.userService.getUserById(req, req.user.id);
 
     const checkPassword: boolean = await bcrypt.compare(
       password,
@@ -120,7 +124,10 @@ export class AuthService {
   }
 
   async forgotPassword(req: any) {
-    const user = await this.userService.getUserByEmail(req, req.body.email);
+    const user: User = await this.userService.getUserByEmail(
+      req,
+      req.body.email,
+    );
 
     if (user) {
       this.userEmail = user.email;
@@ -180,7 +187,7 @@ export class AuthService {
   async enable2FA(req: any, enable2FADto: Enable2FADto) {
     const { email } = enable2FADto;
 
-    const user = await this.userService.getUserByEmail(req, email);
+    const user: User = await this.userService.getUserByEmail(req, email);
 
     if (!user.is2FAEnabled) {
       await req.defaultPrismaClient.user.update({
@@ -203,7 +210,7 @@ export class AuthService {
   async enableSkip2FA(req: any, skip2FADto: Skip2FADto) {
     const { email } = skip2FADto;
 
-    const user = await this.userService.getUserByEmail(req, email);
+    const user: User = await this.userService.getUserByEmail(req, email);
 
     if (user.is2FAEnabled) {
       if (!user.skip2FA) {
@@ -237,7 +244,7 @@ export class AuthService {
   async checkSkip2FA(req: any, checkSkip2FADto: CheckSkip2FADto) {
     const { email } = checkSkip2FADto;
 
-    const user = await this.userService.getUserByEmail(req, email);
+    const user: User = await this.userService.getUserByEmail(req, email);
 
     if (user.skip2FAToken.length !== 0 && user.skip2FA === true) {
       try {

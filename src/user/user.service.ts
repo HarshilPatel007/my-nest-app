@@ -10,6 +10,7 @@ import { EmailVerificationService } from 'src/common/email/email-verification.se
 import { PrismaClientManager } from 'src/database/prisma-client-manager';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -22,27 +23,27 @@ export class UserService {
     return bcrypt.hash(data, 10);
   }
 
-  async getUsers(req: any) {
-    const users = await req.defaultPrismaClient.user.findMany();
+  async getUsers(req: any): Promise<User> {
+    const users: User = await req.defaultPrismaClient.user.findMany();
     return users;
   }
 
-  async getUserById(req: any, _id: string) {
-    const user = await req.defaultPrismaClient.user.findUnique({
+  async getUserById(req: any, _id: string): Promise<User> {
+    const user: User = await req.defaultPrismaClient.user.findUnique({
       where: { id: _id },
     });
     return user;
   }
 
-  async getUserByEmail(req: any, email: string) {
-    const user = await req.defaultPrismaClient.user.findUnique({
+  async getUserByEmail(req: any, email: string): Promise<User> {
+    const user: User = await req.defaultPrismaClient.user.findUnique({
       where: { email },
     });
     return user;
   }
 
-  async getUserByUsername(req: any, username: string) {
-    const user = await req.defaultPrismaClient.user.findUnique({
+  async getUserByUsername(req: any, username: string): Promise<User> {
+    const user: User = await req.defaultPrismaClient.user.findUnique({
       where: { username },
     });
     return user;
