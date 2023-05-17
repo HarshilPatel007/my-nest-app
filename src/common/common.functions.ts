@@ -1,4 +1,4 @@
-import { webcrypto } from 'node:crypto';
+import { webcrypto } from 'node:crypto'
 
 export class CommonFunctions {
   /**
@@ -28,17 +28,31 @@ export class CommonFunctions {
     alphabetsU: boolean,
     specialChar: boolean,
   ): string {
-    let characterSet = '';
+    let characterSet = ''
 
-    if (digits) characterSet += '0123456789';
-    if (alphabetsL) characterSet += 'abcdefghijklmnopqrstuvwxyz';
-    if (alphabetsU) characterSet += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    if (specialChar) characterSet += '!#$%&@[\\]{}';
+    if (digits) characterSet += '0123456789'
+    if (alphabetsL) characterSet += 'abcdefghijklmnopqrstuvwxyz'
+    if (alphabetsU) characterSet += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    if (specialChar) characterSet += '!#$%&@[\\]{}'
 
     const randomString: string[] = Array.from(
       webcrypto.getRandomValues(new Uint8Array(length)),
-    ).map((value): string => characterSet[value % characterSet.length]);
+    ).map((value): string => characterSet[value % characterSet.length])
 
-    return randomString.join('');
+    return randomString.join('')
+  }
+  /**
+   * This function validates a given string
+   * @param str - string to validate
+   * @param allowedChars - characters to be allowed
+   * @returns boolean - true if the string is valid, false otherwise
+   * @example
+   * isValidString('test#123@123', '-_') => false
+   * isValidString('test-123_123', '-_') => true
+   * isValidString('test@123_123', '-_') => true
+   */
+  public validString(str: string, allowedChars: string): boolean {
+    const regex = new RegExp(`^[a-zA-Z0-9${allowedChars}]*$`)
+    return regex.test(str)
   }
 }

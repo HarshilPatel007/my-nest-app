@@ -5,13 +5,13 @@ import {
   HttpStatus,
   Injectable,
   UnauthorizedException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
-import { EmailVerificationService } from 'src/common/email/email-verification.service';
-import { UserService } from 'src/user/user.service';
+} from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { JwtService } from '@nestjs/jwt'
+import { User } from '@prisma/client'
+import * as bcrypt from 'bcrypt'
+import { EmailVerificationService } from '../common/email/email-verification.service'
+import { UserService } from '../user/user.service'
 import {
   AuthDto,
   ChangePasswordDto,
@@ -20,8 +20,8 @@ import {
   ForgotPasswordDto,
   LoginOTPDto,
   Skip2FADto,
-} from './dto/auth.dto';
-import { Tokens } from './types/tokens.types';
+} from './dto/auth.dto'
+import { Tokens } from './types/tokens.types'
 
 @Injectable()
 export class AuthService {
@@ -32,11 +32,11 @@ export class AuthService {
     private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
-  private userEmail = '';
-  private loginTokens: Tokens = { accessToken: '', refreshToken: '' };
+  private userEmail = ''
+  private loginTokens: Tokens = { accessToken: '', refreshToken: '' }
 
   private hashData(data: string): Promise<string> {
-    return bcrypt.hash(data, 10);
+    return bcrypt.hash(data, 10)
   }
 
   async getTokens(username: string, email: string): Promise<Tokens> {
@@ -49,77 +49,71 @@ export class AuthService {
         { username, email },
         { secret: this.configService.get('JWT_RT_SECRET'), expiresIn: '7d' },
       ),
-    ]);
+    ])
 
     return {
       accessToken: at,
       refreshToken: rt,
-    };
+    }
   }
 
   async login(req: any, authDto: AuthDto) {
-    const user: User = await this.userService.getUserByEmail(
-      req,
-      authDto.email,
-    );
+    const user: User = await this.userService.getUserByEmail(req, authDto.email)
 
     const passwordMatches: boolean = await bcrypt.compare(
       authDto.password,
       user.password,
-    );
+    )
 
     if (!user || !passwordMatches)
-      throw new UnauthorizedException('Email OR Password Is Incorrect!');
+      throw new UnauthorizedException('Email OR Password Is Incorrect!')
 
-    const tokens = await this.getTokens(user.username, user.email);
+    const tokens = await this.getTokens(user.username, user.email)
 
-    this.loginTokens.accessToken = tokens.accessToken;
-    this.loginTokens.refreshToken = tokens.refreshToken;
+    this.loginTokens.accessToken = tokens.accessToken
+    this.loginTokens.refreshToken = tokens.refreshToken
 
     if (user.is2FAEnabled) {
       if (user.skip2FA) {
         return {
           user,
           tokens,
-        };
+        }
       } else {
-        await this.emailVerificationService.sendVerificationOTP(user.email);
+        await this.emailVerificationService.sendVerificationOTP(user.email)
         return {
           message: 'The OTP has been sent to your mail.',
           user,
-        };
+        }
       }
     } else {
       return {
         user,
         tokens,
-      };
+      }
     }
   }
 
   async changePassword(req: any, changePasswordDto: ChangePasswordDto) {
-    const { password, newpassword } = changePasswordDto;
+    const { password, newpassword } = changePasswordDto
 
-    const user: User = await this.userService.getUserById(req, req.user.id);
+    const user: User = await this.userService.getUserById(req, req.user.id)
 
-    const checkPassword: boolean = await bcrypt.compare(
-      password,
-      user.password,
-    );
+    const checkPassword: boolean = await bcrypt.compare(password, user.password)
 
     if (checkPassword) {
-      const hashPassword: string = await this.hashData(newpassword);
+      const hashPassword: string = await this.hashData(newpassword)
 
       await req.defaultPrismaClient.user.update({
         where: { id: req.user.id },
         data: {
           password: hashPassword,
         },
-      });
+      })
 
-      return new HttpException('Password Changed!', HttpStatus.OK);
+      return new HttpException('Password Changed!', HttpStatus.OK)
     } else {
-      throw new ForbiddenException('Old Password Is Incorrect!');
+      throw new ForbiddenException('Old Password Is Incorrect!')
     }
   }
 
@@ -127,12 +121,12 @@ export class AuthService {
     const user: User = await this.userService.getUserByEmail(
       req,
       req.body.email,
-    );
+    )
 
     if (user) {
-      this.userEmail = user.email;
+      this.userEmail = user.email
 
-      await this.emailVerificationService.sendVerificationOTP(user.email);
+      await this.emailVerificationService.sendVerificationOTP(user.email)
     }
   }
 
@@ -140,32 +134,32 @@ export class AuthService {
     req: any,
     forgotPasswordDto: ForgotPasswordDto,
   ) {
-    const { newpassword, otp } = forgotPasswordDto;
+    const { newpassword, otp } = forgotPasswordDto
 
     const verifyOTP: boolean = await this.emailVerificationService.verifyOTP(
       otp,
-    );
+    )
 
     if (verifyOTP) {
-      const hashPassword: string = await this.hashData(newpassword);
+      const hashPassword: string = await this.hashData(newpassword)
 
       await req.defaultPrismaClient.user.update({
         where: { email: this.userEmail },
         data: {
           password: hashPassword,
         },
-      });
+      })
 
-      return new HttpException('Password Changed!', HttpStatus.OK);
+      return new HttpException('Password Changed!', HttpStatus.OK)
     }
   }
 
   async verifyOTPForLogin(req: any, loginOTPDto: LoginOTPDto) {
-    const { otp } = loginOTPDto;
+    const { otp } = loginOTPDto
 
     const verifyOTP: boolean = await this.emailVerificationService.verifyOTP(
       otp,
-    );
+    )
 
     if (verifyOTP) {
       const payload = await this.jwtService.verify(
@@ -173,21 +167,21 @@ export class AuthService {
         {
           secret: this.configService.get('JWT_AT_SECRET'),
         },
-      );
+      )
 
-      const user = await this.userService.getUserByEmail(req, payload.email);
+      const user = await this.userService.getUserByEmail(req, payload.email)
 
       return {
         user,
         tokens: this.loginTokens,
-      };
+      }
     }
   }
 
   async enable2FA(req: any, enable2FADto: Enable2FADto) {
-    const { email } = enable2FADto;
+    const { email } = enable2FADto
 
-    const user: User = await this.userService.getUserByEmail(req, email);
+    const user: User = await this.userService.getUserByEmail(req, email)
 
     if (!user.is2FAEnabled) {
       await req.defaultPrismaClient.user.update({
@@ -195,22 +189,22 @@ export class AuthService {
         data: {
           is2FAEnabled: true,
         },
-      });
+      })
       throw new HttpException(
         '2 Factor Authentication Is Now Enabled!',
         HttpStatus.OK,
-      );
+      )
     } else {
       throw new UnauthorizedException(
         '2 Factor Authentication Is Already Enabled!',
-      );
+      )
     }
   }
 
   async enableSkip2FA(req: any, skip2FADto: Skip2FADto) {
-    const { email } = skip2FADto;
+    const { email } = skip2FADto
 
-    const user: User = await this.userService.getUserByEmail(req, email);
+    const user: User = await this.userService.getUserByEmail(req, email)
 
     if (user.is2FAEnabled) {
       if (!user.skip2FA) {
@@ -220,7 +214,7 @@ export class AuthService {
             secret: this.configService.get('JWT_SKIP2FA_TOKEN_SECRET'),
             expiresIn: '5m',
           },
-        );
+        )
 
         return await req.defaultPrismaClient.user.update({
           where: { email: user.email },
@@ -228,29 +222,29 @@ export class AuthService {
             skip2FA: true,
             skip2FAToken,
           },
-        });
+        })
       } else {
         throw new UnauthorizedException(
           'Skip 2 Factor Authentication Is Already Enabled!',
-        );
+        )
       }
     } else {
       throw new UnauthorizedException(
         'Please Enable 2 Factor Authentication First!',
-      );
+      )
     }
   }
 
   async checkSkip2FA(req: any, checkSkip2FADto: CheckSkip2FADto) {
-    const { email } = checkSkip2FADto;
+    const { email } = checkSkip2FADto
 
-    const user: User = await this.userService.getUserByEmail(req, email);
+    const user: User = await this.userService.getUserByEmail(req, email)
 
     if (user.skip2FAToken.length !== 0 && user.skip2FA === true) {
       try {
         await this.jwtService.verify(user.skip2FAToken, {
           secret: this.configService.get('JWT_SKIP2FA_TOKEN_SECRET'),
-        });
+        })
       } catch (error) {
         if (error?.name === 'TokenExpiredError') {
           return await req.defaultPrismaClient.user.update({
@@ -259,9 +253,9 @@ export class AuthService {
               skip2FA: false,
               skip2FAToken: '',
             },
-          });
+          })
         }
-        throw new BadRequestException('Bad verification token!');
+        throw new BadRequestException('Bad verification token!')
       }
     }
   }

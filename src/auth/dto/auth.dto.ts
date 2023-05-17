@@ -1,56 +1,56 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
 
 export class AuthDto {
   @IsEmail({ message: 'please enter email address' })
   @IsNotEmpty({ message: 'email is required' })
-  email: string;
+  email: string
 
   @IsString({ message: 'password must be a string' })
   @IsNotEmpty({ message: 'please enter password' })
-  password: string;
+  password: string
 }
 
 export class ChangePasswordDto {
   @IsString({ message: 'password must be a string' })
   @IsNotEmpty({ message: 'please enter password' })
   @MinLength(8, { message: 'password must be 8 characters long' })
-  password: string;
+  password: string
 
   @IsString({ message: 'password must be a string' })
   @IsNotEmpty({ message: 'please enter password' })
   @MinLength(8, { message: 'password must be 8 characters long' })
-  newpassword: string;
+  newpassword: string
 }
 
 export class ForgotPasswordDto {
   @IsString({ message: 'password must be a string' })
   @IsNotEmpty({ message: 'please enter password' })
   @MinLength(8, { message: 'password must be 8 characters long' })
-  newpassword: string;
+  newpassword: string
 
   @IsNotEmpty({ message: 'please enter OTP' })
-  otp: string;
+  otp: string
 }
 
 export class LoginOTPDto {
   @IsNotEmpty({ message: 'please enter OTP' })
-  otp: string;
+  otp: string
 }
 
 export class Enable2FADto {
   @IsEmail({ message: 'please enter email address' })
   @IsNotEmpty({ message: 'email is required' })
-  email: string;
+  email: string
 }
 
 export class Skip2FADto {
   @IsEmail({ message: 'please enter email address' })
   @IsNotEmpty({ message: 'email is required' })
-  email: string;
+  email: string
 }
 
 export class CheckSkip2FADto {
   @IsEmail({ message: 'please enter email address' })
   @IsNotEmpty({ message: 'email is required' })
-  email: string;
+  email: string
 }

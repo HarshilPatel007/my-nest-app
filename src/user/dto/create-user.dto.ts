@@ -5,7 +5,7 @@ import {
   IsString,
   MaxLength,
   MinLength,
-} from 'class-validator';
+} from 'class-validator'
 
 export class CreateUserDto {
   @IsString({ message: 'username must be a string' })
@@ -14,22 +14,22 @@ export class CreateUserDto {
   @MaxLength(20, {
     message: "username shouldn't be more than 20 characters",
   })
-  username: string;
+  username: string
 
   @IsEmail({ message: 'please enter email address' })
   @IsNotEmpty({ message: 'email is required' })
-  email: string;
+  email: string
 
   @IsString({ message: 'password must be a string' })
   @IsNotEmpty({ message: 'please enter password' })
   @MinLength(8, { message: 'password must be 8 characters long' })
-  password: string;
+  password: string
 
   @IsNumber()
   @IsNotEmpty({ message: 'please provide your age' })
-  age: number;
+  age: number
 
   @IsString({ message: 'fullname must be string' })
   @IsNotEmpty({ message: 'please provide your full name' })
-  fullname: string;
+  fullname: string
 }

@@ -1,6 +1,11 @@
 {
   "singleQuote": true,
   "trailingComma": "all",
-  "semi": true,
-  "endOfLine": "lf"
+  "semi": false,
+  "endOfLine": "lf",
+  "tabWidth": 2,
+  "useTabs": false,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "parser": "typescript"
 }
