@@ -1,18 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import {
   BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
+  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common'
 import { User } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
 import { CommonFunctions } from '../common/common.functions'
 import EmailVerificationDto from '../common/email/dto/email-verification.dto'
 import { EmailVerificationService } from '../common/email/email-verification.service'
+import { CustomRequest } from '../common/interface/request.interface'
 import { PrismaClientManager } from '../database/prisma-client-manager'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
@@ -29,33 +28,42 @@ export class UserService {
     return bcrypt.hash(data, 10)
   }
 
-  async getUsers(req: any): Promise<User> {
-    const users: User = await req.defaultPrismaClient.user.findMany()
+  async getUsers(req: CustomRequest): Promise<User[]> {
+    const users: User[] = await req.defaultPrismaClient.user.findMany()
     return users
   }
 
-  async getUserById(req: any, _id: string): Promise<User> {
-    const user: User = await req.defaultPrismaClient.user.findUnique({
+  async getUserById(
+    req: CustomRequest,
+    _id: string | undefined = '',
+  ): Promise<User | null> {
+    const user: User | null = await req.defaultPrismaClient.user.findUnique({
       where: { id: _id },
     })
     return user
   }
 
-  async getUserByEmail(req: any, email: string): Promise<User> {
-    const user: User = await req.defaultPrismaClient.user.findUnique({
+  async getUserByEmail(
+    req: CustomRequest,
+    email: string,
+  ): Promise<User | null> {
+    const user: User | null = await req.defaultPrismaClient.user.findUnique({
       where: { email },
     })
     return user
   }
 
-  async getUserByUsername(req: any, username: string): Promise<User> {
-    const user: User = await req.defaultPrismaClient.user.findUnique({
+  async getUserByUsername(
+    req: CustomRequest,
+    username: string,
+  ): Promise<User | null> {
+    const user: User | null = await req.defaultPrismaClient.user.findUnique({
       where: { username },
     })
     return user
   }
 
-  async createUser(req: any, createUserDto: CreateUserDto) {
+  async createUser(req: CustomRequest, createUserDto: CreateUserDto) {
     const { username, email, password, age, fullname } = createUserDto
     const passwordHash = await this.hashData(password)
 
@@ -91,7 +99,7 @@ export class UserService {
             'Something went wrong while creating the database.',
             HttpStatus.INTERNAL_SERVER_ERROR,
             {
-              cause: error,
+              cause: error as Error,
             },
           )
         }
@@ -105,7 +113,7 @@ export class UserService {
           })
         } catch (error) {
           throw new BadRequestException('Database already exists.', {
-            cause: error,
+            cause: error as Error,
             description: `If you're trying to create a new user, please change the username OR add 'dbnm' in headers if you have already registered your account.`,
           })
         }
@@ -124,7 +132,11 @@ export class UserService {
   }
 
   // user can not update password and username
-  async updateUser(req: any, updateUserDto: UpdateUserDto, _id: string) {
+  async updateUser(
+    req: CustomRequest,
+    updateUserDto: UpdateUserDto,
+    _id: string,
+  ): Promise<User> {
     const { email, fullname, age } = updateUserDto
 
     return await req.defaultPrismaClient.user.update({
@@ -141,13 +153,16 @@ export class UserService {
     })
   }
 
-  async deleteUser(req: any, _id: string) {
+  async deleteUser(req: CustomRequest, _id: string): Promise<User> {
     return await req.defaultPrismaClient.user.delete({
       where: { id: _id },
     })
   }
 
-  private async markEmailAsVerified(req: any, email: string) {
+  private async markEmailAsVerified(
+    req: CustomRequest,
+    email: string,
+  ): Promise<User> {
     return await req.defaultPrismaClient.user.update({
       where: { email },
       data: {
@@ -156,30 +171,31 @@ export class UserService {
     })
   }
 
-  async verifyEmail(req: any, dto: EmailVerificationDto) {
-    let getEmailFromToken = ''
-
-    getEmailFromToken =
+  async verifyEmail(req: CustomRequest, dto: EmailVerificationDto) {
+    const getEmailFromToken: string | undefined =
       await this.emailVerificationService.decodeVerificationToken(dto.token)
-    const user = await this.getUserByEmail(req, getEmailFromToken)
-
+    const user: User | null = await this.getUserByEmail(
+      req,
+      getEmailFromToken?.trim() || '',
+    )
     if (!user) {
       throw new BadRequestException('User not found!')
     }
-
     if (user.isEmailVerified) {
       throw new BadRequestException('Email address is already verified!')
     }
-
     try {
-      await this.markEmailAsVerified(req, getEmailFromToken)
-    } catch (error) {
-      throw new HttpException(
-        'Something went wrong while verifying your email.',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      )
-    } finally {
-      throw new HttpException('Email address is now verified!', HttpStatus.OK)
+      await this.markEmailAsVerified(req, getEmailFromToken?.trim() || '')
+    } catch (error: any) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (error.response.statusCode === HttpStatus.NOT_FOUND) {
+        throw new NotFoundException('Email verification not found!')
+      } else {
+        throw new InternalServerErrorException(
+          'Could not mark email as verified!',
+        )
+      }
     }
+    throw new HttpException('Email address is now verified!', HttpStatus.OK)
   }
 }

@@ -29,7 +29,7 @@ export class EmailVerificationService {
       expiresIn: '30m',
     })
 
-    const hashToken = await bcrypt.hash(this.token, 10)
+    const hashToken: string = await bcrypt.hash(this.token, 10)
 
     const url = `${this.configService.get('MAIL_URL')}?token=${hashToken}`
 
@@ -44,7 +44,7 @@ export class EmailVerificationService {
   }
 
   public async decodeVerificationToken(encodedToken: string) {
-    const tokenMatches = await bcrypt.compare(this.token, encodedToken)
+    const tokenMatches: boolean = await bcrypt.compare(this.token, encodedToken)
     if (!tokenMatches) {
       throw new HttpException(
         'Verification token is not matched!',
@@ -52,14 +52,18 @@ export class EmailVerificationService {
       )
     } else {
       try {
-        const payload = await this.jwtService.verify(this.token, {
-          secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
-        })
+        const payload: { email: string } = await this.jwtService.verify(
+          this.token,
+          {
+            secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET'),
+          },
+        )
 
         if (typeof payload === 'object' && 'email' in payload) {
           return payload.email
         }
       } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (error?.name === 'TokenExpiredError') {
           throw new BadRequestException('Verification token expired!')
         }
@@ -86,7 +90,7 @@ export class EmailVerificationService {
     })
   }
 
-  public async verifyOTP(otp: string) {
+  public verifyOTP(otp: string): boolean {
     if (this.otp !== otp) {
       throw new HttpException(`Invalid OTP!`, HttpStatus.FORBIDDEN)
     } else {

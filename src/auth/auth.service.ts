@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt'
 import { User } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
 import { EmailVerificationService } from '../common/email/email-verification.service'
+import { CustomRequest } from '../common/interface/request.interface'
 import { UserService } from '../user/user.service'
 import {
   AuthDto,
@@ -21,7 +22,12 @@ import {
   LoginOTPDto,
   Skip2FADto,
 } from './dto/auth.dto'
-import { Tokens } from './types/tokens.types'
+import {
+  Tokens,
+  commonRequest,
+  forgotPasswordRequest,
+  loginOTPRequest,
+} from './types/auth.types'
 
 @Injectable()
 export class AuthService {
@@ -57,15 +63,21 @@ export class AuthService {
     }
   }
 
-  async login(req: any, authDto: AuthDto) {
-    const user: User = await this.userService.getUserByEmail(req, authDto.email)
+  async login(req: CustomRequest, authDto: AuthDto) {
+    const user: User | null = await this.userService.getUserByEmail(
+      req,
+      authDto.email,
+    )
+
+    if (!user)
+      throw new UnauthorizedException('Email OR Password Is Incorrect!')
 
     const passwordMatches: boolean = await bcrypt.compare(
       authDto.password,
       user.password,
     )
 
-    if (!user || !passwordMatches)
+    if (!passwordMatches)
       throw new UnauthorizedException('Email OR Password Is Incorrect!')
 
     const tokens = await this.getTokens(user.username, user.email)
@@ -94,18 +106,22 @@ export class AuthService {
     }
   }
 
-  async changePassword(req: any, changePasswordDto: ChangePasswordDto) {
+  async changePassword(
+    req: CustomRequest,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<HttpException> {
     const { password, newpassword } = changePasswordDto
 
-    const user: User = await this.userService.getUserById(req, req.user.id)
+    const user: User | null = await this.userService.getUserById(
+      req,
+      req.user?.id,
+    )
 
-    const checkPassword: boolean = await bcrypt.compare(password, user.password)
-
-    if (checkPassword) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       const hashPassword: string = await this.hashData(newpassword)
 
       await req.defaultPrismaClient.user.update({
-        where: { id: req.user.id },
+        where: { id: req.user?.id },
         data: {
           password: hashPassword,
         },
@@ -117,8 +133,8 @@ export class AuthService {
     }
   }
 
-  async forgotPassword(req: any) {
-    const user: User = await this.userService.getUserByEmail(
+  async forgotPassword(req: CustomRequest<forgotPasswordRequest>) {
+    const user: User | null = await this.userService.getUserByEmail(
       req,
       req.body.email,
     )
@@ -131,14 +147,12 @@ export class AuthService {
   }
 
   async verifyOTPForForgotPassword(
-    req: any,
+    req: CustomRequest<forgotPasswordRequest>,
     forgotPasswordDto: ForgotPasswordDto,
   ) {
     const { newpassword, otp } = forgotPasswordDto
 
-    const verifyOTP: boolean = await this.emailVerificationService.verifyOTP(
-      otp,
-    )
+    const verifyOTP: boolean = this.emailVerificationService.verifyOTP(otp)
 
     if (verifyOTP) {
       const hashPassword: string = await this.hashData(newpassword)
@@ -154,22 +168,26 @@ export class AuthService {
     }
   }
 
-  async verifyOTPForLogin(req: any, loginOTPDto: LoginOTPDto) {
+  async verifyOTPForLogin(
+    req: CustomRequest<loginOTPRequest>,
+    loginOTPDto: LoginOTPDto,
+  ) {
     const { otp } = loginOTPDto
 
-    const verifyOTP: boolean = await this.emailVerificationService.verifyOTP(
-      otp,
-    )
+    const verifyOTP: boolean = this.emailVerificationService.verifyOTP(otp)
 
     if (verifyOTP) {
-      const payload = await this.jwtService.verify(
+      const payload: { email: string } = await this.jwtService.verify(
         this.loginTokens.accessToken,
         {
           secret: this.configService.get('JWT_AT_SECRET'),
         },
       )
 
-      const user = await this.userService.getUserByEmail(req, payload.email)
+      const user: User | null = await this.userService.getUserByEmail(
+        req,
+        payload.email,
+      )
 
       return {
         user,
@@ -178,14 +196,17 @@ export class AuthService {
     }
   }
 
-  async enable2FA(req: any, enable2FADto: Enable2FADto) {
+  async enable2FA(
+    req: CustomRequest<commonRequest>,
+    enable2FADto: Enable2FADto,
+  ) {
     const { email } = enable2FADto
 
-    const user: User = await this.userService.getUserByEmail(req, email)
+    const user: User | null = await this.userService.getUserByEmail(req, email)
 
-    if (!user.is2FAEnabled) {
+    if (!user?.is2FAEnabled) {
       await req.defaultPrismaClient.user.update({
-        where: { email: user.email },
+        where: { email: user?.email },
         data: {
           is2FAEnabled: true,
         },
@@ -201,12 +222,15 @@ export class AuthService {
     }
   }
 
-  async enableSkip2FA(req: any, skip2FADto: Skip2FADto) {
+  async enableSkip2FA(
+    req: CustomRequest<commonRequest>,
+    skip2FADto: Skip2FADto,
+  ): Promise<User> {
     const { email } = skip2FADto
 
-    const user: User = await this.userService.getUserByEmail(req, email)
+    const user: User | null = await this.userService.getUserByEmail(req, email)
 
-    if (user.is2FAEnabled) {
+    if (user?.is2FAEnabled) {
       if (!user.skip2FA) {
         const skip2FAToken: string = this.jwtService.sign(
           { email },
@@ -235,17 +259,21 @@ export class AuthService {
     }
   }
 
-  async checkSkip2FA(req: any, checkSkip2FADto: CheckSkip2FADto) {
+  async checkSkip2FA(
+    req: CustomRequest<commonRequest>,
+    checkSkip2FADto: CheckSkip2FADto,
+  ): Promise<User | undefined> {
     const { email } = checkSkip2FADto
 
-    const user: User = await this.userService.getUserByEmail(req, email)
+    const user: User | null = await this.userService.getUserByEmail(req, email)
 
-    if (user.skip2FAToken.length !== 0 && user.skip2FA === true) {
+    if (user?.skip2FAToken.length !== 0 && user?.skip2FA === true) {
       try {
         await this.jwtService.verify(user.skip2FAToken, {
           secret: this.configService.get('JWT_SKIP2FA_TOKEN_SECRET'),
         })
       } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (error?.name === 'TokenExpiredError') {
           return await req.defaultPrismaClient.user.update({
             where: { email: user.email },

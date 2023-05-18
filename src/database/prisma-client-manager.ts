@@ -12,6 +12,7 @@ export class PrismaClientManager implements OnModuleInit, OnModuleDestroy {
   private defaultPrismaClient: PrismaClient
 
   private createConnection(dbNm: string): PrismaClient {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     const databaseUrl: string = this.configService
       .get('DATABASE_URL')
       .replace('DEFAULT', dbNm)

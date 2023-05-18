@@ -11,6 +11,7 @@ import { Body, Req } from '@nestjs/common/decorators'
 import { AuthGuard } from '@nestjs/passport'
 import { User } from '@prisma/client'
 import EmailVerificationDto from '../common/email/dto/email-verification.dto'
+import { CustomRequest } from '../common/interface/request.interface'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { UserExist } from './guards/user-exists.guard'
@@ -23,45 +24,54 @@ export class UserController {
 
   @UseGuards(AuthGuard('jwt-access'))
   @Get('all')
-  async getUsers(@Req() req: any) {
+  async getUsers(@Req() req: CustomRequest): Promise<User[]> {
     return await this.userService.getUsers(req)
   }
 
   @UseGuards(AuthGuard('jwt-access'))
   @Get('me')
-  async getLoggedInUser(@Req() req: any): Promise<User> {
-    return await req.user
+  getLoggedInUser(@Req() req: CustomRequest): Promise<User | undefined> {
+    return Promise.resolve(req.user)
   }
 
   // if we want to get it by mongodb generated ObjectID "_id"
   @UseGuards(AuthGuard('jwt-access'))
   @Get('get/:userId')
-  async getUser(@Req() req: any, @Param('userId') _id: string) {
+  async getUser(
+    @Req() req: CustomRequest,
+    @Param('userId') _id: string,
+  ): Promise<User | null> {
     console.log('controller', req.defaultPrismaClient)
     return await this.userService.getUserById(req, _id)
   }
 
   @UseGuards(UserExist)
   @Post('create')
-  async createUser(@Req() req: any, @Body() createUserDto: CreateUserDto) {
+  async createUser(
+    @Req() req: CustomRequest,
+    @Body() createUserDto: CreateUserDto,
+  ) {
     console.log('controller!')
     return await this.userService.createUser(req, createUserDto)
   }
 
   @Post('create/verify-email')
-  async verify(@Req() req: any, @Body() dto: EmailVerificationDto) {
+  async verify(@Req() req: CustomRequest, @Body() dto: EmailVerificationDto) {
     return await this.userService.verifyEmail(req, dto)
   }
 
   @UseGuards(AuthGuard('jwt-access'), UserExist, UserUpdate)
   @Patch('update')
-  async updateUser(@Req() req: any, @Body() updateUserDto: UpdateUserDto) {
+  async updateUser(
+    @Req() req: CustomRequest,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<User> {
     return await this.userService.updateUser(req, updateUserDto, req.user.id)
   }
 
   @UseGuards(AuthGuard('jwt-access'))
   @Delete('delete')
-  async deleteUser(@Req() req: any) {
+  async deleteUser(@Req() req: CustomRequest): Promise<User> {
     return await this.userService.deleteUser(req, req.user.id)
   }
 }
