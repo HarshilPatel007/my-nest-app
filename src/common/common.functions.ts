@@ -41,17 +41,18 @@ export class CommonFunctions {
 
     return randomString.join('')
   }
+
   /**
    * This function validates a given string
-   * @param str - string to validate
-   * @param allowedChars - characters to be allowed
-   * @returns boolean - true if the string is valid, false otherwise
+   * @param {string} str - string to validate
+   * @param {string} allowedChars - characters to be allowed
+   * @returns {boolean} boolean - true if the string is valid, false otherwise
    * @example
-   * isValidString('test#123@123', '-_') => false
-   * isValidString('test-123_123', '-_') => true
-   * isValidString('test@123_123', '-_') => true
+   * validateString('test#123@123', '-_') => false
+   * validateString('test-123_123', '-_') => true
+   * validateString('test@123_123', '-_') => false
    */
-  public validString(str: string, allowedChars: string): boolean {
+  public validateString(str: string, allowedChars: string): boolean {
     const regex = new RegExp(`^[a-zA-Z0-9${allowedChars}]*$`)
     return regex.test(str)
   }

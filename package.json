@@ -1,10 +1,10 @@
 {
-  "name": "my-app",
+  "name": "base-nestjs-repo",
   "version": "0.0.1",
-  "description": "",
+  "description": "Base NestJS Repo serves as a solid base repository for you to build your NestJS projects upon, with a reliable and secure authentication and authorization system and other goodies already in place.",
   "author": "Harshil Patel",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",

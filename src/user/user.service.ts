@@ -24,8 +24,8 @@ export class UserService {
     private commonFunctions: CommonFunctions,
   ) {}
 
-  private hashData(data: string) {
-    return bcrypt.hash(data, 10)
+  private async hashData(data: string): Promise<string> {
+    return await bcrypt.hash(data, 10)
   }
 
   async getUsers(req: CustomRequest): Promise<User[]> {
@@ -65,10 +65,10 @@ export class UserService {
 
   async createUser(req: CustomRequest, createUserDto: CreateUserDto) {
     const { username, email, password, age, fullname } = createUserDto
-    const passwordHash = await this.hashData(password)
+    const passwordHash: string = await this.hashData(password)
 
     if (req.headers.dbnm === 'default') {
-      if (this.commonFunctions.validString(username, '-_')) {
+      if (this.commonFunctions.validateString(username, '-_')) {
         // create User
         try {
           await req.defaultPrismaClient.user.create({

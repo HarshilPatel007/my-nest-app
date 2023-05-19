@@ -41,7 +41,6 @@ export class UserController {
     @Req() req: CustomRequest,
     @Param('userId') _id: string,
   ): Promise<User | null> {
-    console.log('controller', req.defaultPrismaClient)
     return await this.userService.getUserById(req, _id)
   }
 
@@ -51,7 +50,6 @@ export class UserController {
     @Req() req: CustomRequest,
     @Body() createUserDto: CreateUserDto,
   ) {
-    console.log('controller!')
     return await this.userService.createUser(req, createUserDto)
   }
 
