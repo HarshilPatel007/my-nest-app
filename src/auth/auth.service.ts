@@ -17,7 +17,7 @@ import {
   AuthDto,
   ChangePasswordDto,
   CheckSkip2FADto,
-  Enable2FADto,
+  EnableDisable2FADto,
   ForgotPasswordDto,
   LoginOTPDto,
   Skip2FADto,
@@ -198,7 +198,7 @@ export class AuthService {
 
   async enable2FA(
     req: CustomRequest<commonRequest>,
-    enable2FADto: Enable2FADto,
+    enable2FADto: EnableDisable2FADto,
   ) {
     const { email } = enable2FADto
 
@@ -212,13 +212,39 @@ export class AuthService {
         },
       })
       throw new HttpException(
-        '2 Factor Authentication Is Now Enabled!',
+        '2 Factor Authentication Is Now Enable!',
         HttpStatus.OK,
       )
     } else {
       throw new UnauthorizedException(
         '2 Factor Authentication Is Already Enabled!',
       )
+    }
+  }
+
+  async disable2FA(
+    req: CustomRequest<commonRequest>,
+    disable2FADto: EnableDisable2FADto,
+  ) {
+    const { email } = disable2FADto
+
+    const user: User | null = await this.userService.getUserByEmail(req, email)
+
+    if (user?.is2FAEnabled) {
+      await req.defaultPrismaClient.user.update({
+        where: { email: user?.email },
+        data: {
+          is2FAEnabled: false,
+          skip2FA: false,
+          skip2FAToken: '',
+        },
+      })
+      throw new HttpException(
+        '2 Factor Authentication Is Now Disable!',
+        HttpStatus.OK,
+      )
+    } else {
+      throw new UnauthorizedException('2 Factor Authentication Is Not Enable!')
     }
   }
 
@@ -236,7 +262,7 @@ export class AuthService {
           { email },
           {
             secret: this.configService.get('JWT_SKIP2FA_TOKEN_SECRET'),
-            expiresIn: '5m',
+            expiresIn: '5m', // change it to 30 or N days.
           },
         )
 
@@ -250,6 +276,35 @@ export class AuthService {
       } else {
         throw new UnauthorizedException(
           'Skip 2 Factor Authentication Is Already Enabled!',
+        )
+      }
+    } else {
+      throw new UnauthorizedException(
+        'Please Enable 2 Factor Authentication First!',
+      )
+    }
+  }
+
+  async disableSkip2FA(
+    req: CustomRequest<commonRequest>,
+    skip2FADto: Skip2FADto,
+  ): Promise<User> {
+    const { email } = skip2FADto
+
+    const user: User | null = await this.userService.getUserByEmail(req, email)
+
+    if (user?.is2FAEnabled) {
+      if (user.skip2FA) {
+        return await req.defaultPrismaClient.user.update({
+          where: { email: user.email },
+          data: {
+            skip2FA: false,
+            skip2FAToken: '',
+          },
+        })
+      } else {
+        throw new UnauthorizedException(
+          'Skip 2 Factor Authentication Is Not Enable!',
         )
       }
     } else {

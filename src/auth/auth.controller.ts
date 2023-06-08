@@ -7,7 +7,7 @@ import {
   AuthDto,
   ChangePasswordDto,
   CheckSkip2FADto,
-  Enable2FADto,
+  EnableDisable2FADto,
   ForgotPasswordDto,
   LoginOTPDto,
   Skip2FADto,
@@ -38,9 +38,17 @@ export class AuthController {
   @Patch('login/enable-2fa')
   enable2FA(
     @Req() req: CustomRequest<commonRequest>,
-    @Body() enable2FADto: Enable2FADto,
+    @Body() enable2FADto: EnableDisable2FADto,
   ) {
     return this.authService.enable2FA(req, enable2FADto)
+  }
+
+  @Patch('login/disable-2fa')
+  disable2FA(
+    @Req() req: CustomRequest<commonRequest>,
+    @Body() disable2FADto: EnableDisable2FADto,
+  ) {
+    return this.authService.disable2FA(req, disable2FADto)
   }
 
   @Patch('login/enable-skip2fa')
@@ -49,6 +57,14 @@ export class AuthController {
     @Body() skip2FADto: Skip2FADto,
   ) {
     return this.authService.enableSkip2FA(req, skip2FADto)
+  }
+
+  @Patch('login/disable-skip2fa')
+  disableSkip2FA(
+    @Req() req: CustomRequest<commonRequest>,
+    @Body() skip2FADto: Skip2FADto,
+  ) {
+    return this.authService.disableSkip2FA(req, skip2FADto)
   }
 
   @Patch('login/check-skip2fa')

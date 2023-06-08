@@ -21,7 +21,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "npx prisma generate",
-    "prisma-all": "npx prisma format && npx prisma generate && npx prisma db push"
+    "prisma-all": "npx prisma format && npx prisma generate && npx prisma db push",
+    "css:compile": "npx tailwindcss -i ./src/common/mail_templates/tailwind_style.css -o ./src/common/mail_templates/style.css --minify --watch"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.0",
@@ -36,6 +37,7 @@
     "bcrypt": "^5.1.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
+    "handlebars": "^4.7.7",
     "nodemailer": "^6.9.1",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.0",

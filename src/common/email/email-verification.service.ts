@@ -7,6 +7,9 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import * as bcrypt from 'bcrypt'
+import Handlebars from 'handlebars'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { CommonFunctions } from '../common.functions'
 import EmailService from './email.service'
 
@@ -80,13 +83,27 @@ export class EmailVerificationService {
       true,
       false,
     )
-    const text = `Your OTP.\n${this.otp}`
+
+    const templateSrc: string = readFileSync(
+      join('src\\common', '\\mail_templates\\otp.hbs'),
+    ).toString()
+
+    const htmlTemplate = Handlebars.compile(templateSrc)
+
+    // const stylePath = readFileSync(
+    //   join('src\\common', '\\mail_templates\\style.css'),
+    // ).toString()
+
+    const html: string = htmlTemplate({
+      // css: stylePath, // {{css}} in template
+      otp: this.otp,
+    })
 
     return await this.emailService.sendEmail({
       to: email,
       cc: this.configService.get('TEST_EMAIL'),
       subject: 'Email Verification',
-      text,
+      html,
     })
   }
 
